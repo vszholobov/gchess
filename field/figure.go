@@ -1,5 +1,0 @@
-package field
-
-func main() {
-
-}
