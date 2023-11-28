@@ -3,19 +3,68 @@ package board
 const SIZE = 8
 
 type Board struct {
-	board [][]Field
+	board          [][]Field
+	moveValidators map[FigureType][]MoveValidator
+}
+
+// Copy returns deep Copy of given Board
+func (board *Board) Copy() Board {
+	duplicate := make([][]Field, SIZE)
+	for i := range board.board {
+		duplicate[i] = make([]Field, SIZE)
+		copy(duplicate[i], board.board[i])
+	}
+	return Board{board: duplicate, moveValidators: board.moveValidators}
+}
+
+// GetField returns Field at given Cords
+func (board *Board) GetField(cords Cords) Field {
+	return board.board[cords.Row][cords.Col]
+}
+
+// SetField puts given Field to given Cords
+func (board *Board) SetField(field Field) {
+	board.board[field.Cords.Row][field.Cords.Col] = field
+}
+
+func (board *Board) Move(
+	departureCords Cords,
+	destinationCords Cords,
+) (bool, *Board) {
+	departure := board.GetField(departureCords)
+	destination := board.GetField(destinationCords)
+	move := MakeMove(departure, destination)
+
+	for _, validator := range board.moveValidators[departure.Figure.FigureType] {
+		validMove := validator.Validate(board, move)
+		if !validMove {
+			return false, nil
+		}
+	}
+
+	departure.Figure.Moved = true
+
+	// Перемещение. TODO: учесть рокировку и повышение фигуры
+	newDeparture := Field{Cords: departure.Cords, Filled: false}
+	newDestination := Field{Figure: departure.Figure, Cords: destination.Cords, Filled: true}
+
+	actualBoard := board.Copy()
+	actualBoard.SetField(newDeparture)
+	actualBoard.SetField(newDestination)
+
+	return true, &actualBoard
 }
 
 // MakeBoard returns initialized isFilled board
 func MakeBoard() Board {
-	board := Board{make([][]Field, SIZE)}
+	board := Board{make([][]Field, SIZE), initValidators()}
 	for i := range board.board {
 		board.board[i] = make([]Field, SIZE)
 	}
 	return board
 }
 
-func InitDefaultBoard() Board {
+func InitDefaultBoard() *Board {
 	chessboard := MakeBoard()
 
 	// pawn
@@ -62,25 +111,12 @@ func InitDefaultBoard() Board {
 	blackKing := Figure{FigureType: King, FigureSide: Black}
 	chessboard.SetField(Field{Figure: blackKing, Cords: Cords{Col: 4, Row: 7}, Filled: true})
 
-	return chessboard
-}
-
-// Copy returns deep Copy of given Board
-func (board Board) Copy() Board {
-	duplicate := make([][]Field, SIZE)
-	for i := range board.board {
-		duplicate[i] = make([]Field, SIZE)
-		copy(duplicate[i], board.board[i])
+	// empty
+	for row := 2; row < 6; row++ {
+		for col := 0; col < SIZE; col++ {
+			chessboard.SetField(Field{Cords: Cords{Col: col, Row: row}})
+		}
 	}
-	return Board{board: duplicate}
-}
 
-// GetField returns Field at given Cords
-func (board Board) GetField(cords Cords) Field {
-	return board.board[cords.Row][cords.Col]
-}
-
-// SetField puts given Field to given Cords
-func (board Board) SetField(field Field) {
-	board.board[field.Cords.Row][field.Cords.Col] = field
+	return &chessboard
 }

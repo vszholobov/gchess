@@ -4,7 +4,6 @@ type Field struct {
 	Figure Figure
 	Cords  Cords
 	Filled bool
-	Moved  bool
 }
 
 type Cords struct {

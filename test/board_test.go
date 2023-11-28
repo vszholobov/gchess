@@ -2,6 +2,7 @@ package test
 
 import (
 	"chess/board"
+	"chess/session"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -76,4 +77,20 @@ func TestInitDefaultBoard(t *testing.T) {
 			assert.False(t, defaultBoard.GetField(board.Cords{Col: col, Row: row}).Filled)
 		}
 	}
+}
+
+func TestSessionMove(t *testing.T) {
+	chessSession := session.MakeSession()
+	departureCords := board.Cords{Col: 0, Row: 1}
+	destinationCords := board.Cords{Col: 0, Row: 3}
+
+	chessSession.Move(departureCords, destinationCords)
+
+	departure := chessSession.ActualBoard.GetField(departureCords)
+	destination := chessSession.ActualBoard.GetField(destinationCords)
+	assert.False(t, departure.Filled)
+	assert.Equal(t, departure.Figure, board.Figure{})
+	assert.True(t, destination.Filled)
+	assert.Equal(t, destination.Figure, board.Figure{FigureType: board.Pawn, FigureSide: board.White, Moved: true})
+	assert.Len(t, chessSession.BoardHistory, 1)
 }

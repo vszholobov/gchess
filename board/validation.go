@@ -3,12 +3,58 @@ package board
 import "math"
 
 type MoveValidator interface {
-	Validate(chessboard Board, move Move) bool
+	Validate(chessboard *Board, move Move) bool
+}
+
+func initValidators() map[FigureType][]MoveValidator {
+	validators := make(map[FigureType][]MoveValidator, 6)
+	validators[King] = []MoveValidator{
+		BordersBreachValidator{},
+		DepartureEqualsDestinationValidator{},
+		NotAllyChessmanValidator{},
+		KingMoveValidator{},
+	}
+	validators[Pawn] = []MoveValidator{
+		BordersBreachValidator{},
+		DepartureEqualsDestinationValidator{},
+		NotAllyChessmanValidator{},
+		LinePathValidator{},
+		PawnMoveValidator{},
+	}
+	validators[Rook] = []MoveValidator{
+		BordersBreachValidator{},
+		DepartureEqualsDestinationValidator{},
+		NotAllyChessmanValidator{},
+		LinePathValidator{},
+		RookMoveValidator{},
+	}
+	validators[Knight] = []MoveValidator{
+		BordersBreachValidator{},
+		DepartureEqualsDestinationValidator{},
+		NotAllyChessmanValidator{},
+		KingMoveValidator{},
+	}
+	validators[Bishop] = []MoveValidator{
+		BordersBreachValidator{},
+		DepartureEqualsDestinationValidator{},
+		NotAllyChessmanValidator{},
+		DiagonalPathValidator{},
+		BishopMoveValidator{},
+	}
+	validators[Queen] = []MoveValidator{
+		BordersBreachValidator{},
+		DepartureEqualsDestinationValidator{},
+		NotAllyChessmanValidator{},
+		LinePathValidator{},
+		DiagonalPathValidator{},
+		QueenMoveValidator{},
+	}
+	return validators
 }
 
 type BordersBreachValidator struct{}
 
-func (BordersBreachValidator) Validate(_ Board, move Move) bool {
+func (BordersBreachValidator) Validate(_ *Board, move Move) bool {
 	destinationCords := move.Destination.Cords
 	valid := destinationCords.Col >= 0 && destinationCords.Col < SIZE &&
 		destinationCords.Row >= 0 && destinationCords.Row < SIZE
@@ -17,13 +63,13 @@ func (BordersBreachValidator) Validate(_ Board, move Move) bool {
 
 type DepartureEqualsDestinationValidator struct{}
 
-func (DepartureEqualsDestinationValidator) Validate(_ Board, move Move) bool {
+func (DepartureEqualsDestinationValidator) Validate(_ *Board, move Move) bool {
 	return !move.Departure.Cords.Equal(move.Destination.Cords)
 }
 
 type NotAllyChessmanValidator struct{}
 
-func (NotAllyChessmanValidator) Validate(_ Board, move Move) bool {
+func (NotAllyChessmanValidator) Validate(_ *Board, move Move) bool {
 	if !move.Destination.Filled {
 		return true
 	}
@@ -32,7 +78,7 @@ func (NotAllyChessmanValidator) Validate(_ Board, move Move) bool {
 
 type LinePathValidator struct{}
 
-func (LinePathValidator) Validate(chessboard Board, move Move) bool {
+func (LinePathValidator) Validate(chessboard *Board, move Move) bool {
 	startCol := move.Departure.Cords.Col
 	startRow := move.Departure.Cords.Row
 
@@ -69,7 +115,7 @@ func (LinePathValidator) Validate(chessboard Board, move Move) bool {
 
 type DiagonalPathValidator struct{}
 
-func (DiagonalPathValidator) Validate(chessboard Board, move Move) bool {
+func (DiagonalPathValidator) Validate(chessboard *Board, move Move) bool {
 	startCol := move.Departure.Cords.Col
 	startRow := move.Departure.Cords.Row
 
@@ -98,7 +144,7 @@ func (DiagonalPathValidator) Validate(chessboard Board, move Move) bool {
 
 type KnightMoveValidator struct{}
 
-func (KnightMoveValidator) Validate(_ Board, move Move) bool {
+func (KnightMoveValidator) Validate(_ *Board, move Move) bool {
 	startCol := move.Departure.Cords.Col
 	startRow := move.Departure.Cords.Row
 
@@ -112,7 +158,7 @@ func (KnightMoveValidator) Validate(_ Board, move Move) bool {
 
 type QueenMoveValidator struct{}
 
-func (QueenMoveValidator) Validate(_ Board, move Move) bool {
+func (QueenMoveValidator) Validate(_ *Board, move Move) bool {
 	startCol := move.Departure.Cords.Col
 	startRow := move.Departure.Cords.Row
 
@@ -132,7 +178,7 @@ func (QueenMoveValidator) Validate(_ Board, move Move) bool {
 
 type RookMoveValidator struct{}
 
-func (RookMoveValidator) Validate(_ Board, move Move) bool {
+func (RookMoveValidator) Validate(_ *Board, move Move) bool {
 	startCol := move.Departure.Cords.Col
 	startRow := move.Departure.Cords.Row
 
@@ -145,7 +191,7 @@ func (RookMoveValidator) Validate(_ Board, move Move) bool {
 
 type BishopMoveValidator struct{}
 
-func (BishopMoveValidator) Validate(_ Board, move Move) bool {
+func (BishopMoveValidator) Validate(_ *Board, move Move) bool {
 	startCol := move.Departure.Cords.Col
 	startRow := move.Departure.Cords.Row
 
@@ -158,7 +204,7 @@ func (BishopMoveValidator) Validate(_ Board, move Move) bool {
 
 type PawnMoveValidator struct{}
 
-func (PawnMoveValidator) Validate(_ Board, move Move) bool {
+func (PawnMoveValidator) Validate(_ *Board, move Move) bool {
 	startCol := move.Departure.Cords.Col
 	destCol := move.Destination.Cords.Col
 
@@ -182,7 +228,7 @@ func (PawnMoveValidator) Validate(_ Board, move Move) bool {
 
 type KingMoveValidator struct{}
 
-func (KingMoveValidator) Validate(_ Board, move Move) bool {
+func (KingMoveValidator) Validate(_ *Board, move Move) bool {
 	colDiff := math.Abs(float64(move.Departure.Cords.Col - move.Destination.Cords.Col))
 	rowDiff := math.Abs(float64(move.Departure.Cords.Row - move.Destination.Cords.Row))
 	return colDiff <= 1 && rowDiff <= 1
