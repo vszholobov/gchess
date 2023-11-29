@@ -94,3 +94,58 @@ func TestSessionMove(t *testing.T) {
 	assert.Equal(t, destination.Figure, board.Figure{FigureType: board.Pawn, FigureSide: board.White, Moved: true})
 	assert.Len(t, chessSession.BoardHistory, 1)
 }
+
+func TestSessionMove_FailSecondWhiteMove(t *testing.T) {
+	chessSession := session.MakeSession()
+	firstWhiteMoveDepartureCords := board.Cords{Col: 0, Row: 1}
+	firstWhiteMoveDestinationCords := board.Cords{Col: 0, Row: 3}
+	secondWhiteMoveDepartureCords := board.Cords{Col: 1, Row: 1}
+	secondWhiteMoveDestinationCords := board.Cords{Col: 1, Row: 3}
+
+	firstWhiteMoveIsMoved := chessSession.Move(firstWhiteMoveDepartureCords, firstWhiteMoveDestinationCords)
+	secondWhiteMoveIsMoved := chessSession.Move(secondWhiteMoveDepartureCords, secondWhiteMoveDestinationCords)
+
+	assert.True(t, firstWhiteMoveIsMoved)
+	assert.False(t, secondWhiteMoveIsMoved)
+	assert.Len(t, chessSession.BoardHistory, 1)
+}
+
+func TestSessionMove_FailFirstBlackMove(t *testing.T) {
+	chessSession := session.MakeSession()
+	firstBlackMoveDepartureCords := board.Cords{Col: 0, Row: 6}
+	firstBlackMoveDestinationCords := board.Cords{Col: 0, Row: 4}
+
+	firstBlackMoveIsMoved := chessSession.Move(firstBlackMoveDepartureCords, firstBlackMoveDestinationCords)
+
+	assert.False(t, firstBlackMoveIsMoved)
+	assert.Len(t, chessSession.BoardHistory, 0)
+}
+
+func TestSessionMove_SecondBlackMove(t *testing.T) {
+	chessSession := session.MakeSession()
+	whiteMoveDepartureCords := board.Cords{Col: 0, Row: 1}
+	whiteMoveDestinationCords := board.Cords{Col: 0, Row: 3}
+	blackMoveDepartureCords := board.Cords{Col: 0, Row: 6}
+	blackMoveDestinationCords := board.Cords{Col: 0, Row: 4}
+
+	whiteMoveIsMoved := chessSession.Move(whiteMoveDepartureCords, whiteMoveDestinationCords)
+	blackMoveIsMoved := chessSession.Move(blackMoveDepartureCords, blackMoveDestinationCords)
+
+	assert.True(t, whiteMoveIsMoved)
+	assert.True(t, blackMoveIsMoved)
+	assert.Len(t, chessSession.BoardHistory, 2)
+
+	whiteDeparture := chessSession.ActualBoard.GetField(whiteMoveDepartureCords)
+	whiteDestination := chessSession.ActualBoard.GetField(whiteMoveDestinationCords)
+	assert.False(t, whiteDeparture.Filled)
+	assert.Equal(t, whiteDeparture.Figure, board.Figure{})
+	assert.True(t, whiteDestination.Filled)
+	assert.Equal(t, whiteDestination.Figure, board.Figure{FigureType: board.Pawn, FigureSide: board.White, Moved: true})
+
+	blackDeparture := chessSession.ActualBoard.GetField(blackMoveDepartureCords)
+	blackDestination := chessSession.ActualBoard.GetField(blackMoveDestinationCords)
+	assert.False(t, blackDeparture.Filled)
+	assert.Equal(t, blackDeparture.Figure, board.Figure{})
+	assert.True(t, blackDestination.Filled)
+	assert.Equal(t, blackDestination.Figure, board.Figure{FigureType: board.Pawn, FigureSide: board.Black, Moved: true})
+}
