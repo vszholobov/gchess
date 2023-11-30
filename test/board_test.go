@@ -218,7 +218,7 @@ func TestBlackLongCastleValidation_FailKingMovedBefore(t *testing.T) {
 	blackKingCords := board.Cords{Col: 4, Row: 7}
 	blackKingField := board.Field{Figure: blackKing, Cords: blackKingCords, Filled: true}
 	chessBoard.SetField(blackKingField)
-	blackRook := board.Figure{FigureType: board.Rook, FigureSide: board.White, Moved: false}
+	blackRook := board.Figure{FigureType: board.Rook, FigureSide: board.Black, Moved: false}
 	blackRookCords := board.Cords{Col: 0, Row: 7}
 	blackRookField := board.Field{Figure: blackRook, Cords: blackRookCords, Filled: true}
 	chessBoard.SetField(blackRookField)
@@ -237,7 +237,7 @@ func TestBlackLongCastleValidation_FailRookMovedBefore(t *testing.T) {
 	blackKingCords := board.Cords{Col: 4, Row: 7}
 	blackKingField := board.Field{Figure: blackKing, Cords: blackKingCords, Filled: true}
 	chessBoard.SetField(blackKingField)
-	blackRook := board.Figure{FigureType: board.Rook, FigureSide: board.White, Moved: true}
+	blackRook := board.Figure{FigureType: board.Rook, FigureSide: board.Black, Moved: true}
 	blackRookCords := board.Cords{Col: 0, Row: 7}
 	blackRookField := board.Field{Figure: blackRook, Cords: blackRookCords, Filled: true}
 	chessBoard.SetField(blackRookField)
@@ -249,5 +249,3 @@ func TestBlackLongCastleValidation_FailRookMovedBefore(t *testing.T) {
 
 	assert.False(t, isCastled)
 }
-
-// TODO: attacked between validator
