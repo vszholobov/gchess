@@ -13,6 +13,7 @@ func initValidators() map[FigureType][]MoveValidator {
 		DepartureEqualsDestinationValidator{},
 		NotAllyChessmanValidator{},
 		KingMoveValidator{},
+		CastlingMoveValidator{},
 	}
 	validators[Pawn] = []MoveValidator{
 		BordersBreachValidator{},
@@ -234,6 +235,50 @@ func (KingMoveValidator) Validate(_ *Board, move Move) bool {
 	return colDiff <= 1 && rowDiff <= 1
 }
 
-// TODO: рокировка
+type CastlingMoveValidator struct{}
+
+func (CastlingMoveValidator) Validate(board *Board, move Move) bool {
+	king := move.Departure.Figure
+	if king.Moved {
+		return false
+	}
+	var row int
+	if king.FigureSide == White {
+		row = 0
+	} else {
+		row = 7
+	}
+	var rookCol int
+	if longCastleCords := (Cords{Col: 2, Row: row}); longCastleCords == move.Destination.Cords {
+		rookCol = 0
+	} else if shortCastleCords := (Cords{Col: 6, Row: row}); shortCastleCords == move.Destination.Cords {
+		rookCol = 7
+	} else {
+		return false
+	}
+
+	// if castle side rook isn't a rook or moved before, then can't castle
+	if rook := (board.GetField(Cords{Col: rookCol, Row: row}).Figure); rook.FigureType != Rook || rook.Moved {
+		return false
+	}
+
+	// if any field between the king and the rook are filled then can't castle
+	kingCol := move.Departure.Cords.Col
+	for col := min(kingCol, rookCol) + 1; col < max(kingCol, rookCol); col++ {
+		if board.GetField(Cords{Col: col, Row: row}).Filled {
+			return false
+		}
+	}
+
+	// if any field between the king and the destination are attacked then can't castle
+	for col := min(move.Destination.Cords.Col, kingCol); col <= max(move.Destination.Cords.Col, kingCol); col++ {
+		if board.isFieldAttackedByOpposedSide(Cords{Col: col, Row: row}, king.FigureSide) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // TODO: валидатор атаки короля после хода фигуры
 // TODO: поле в валидаторы можно прокинуть указателем в сами структуры, чтобы не передавать в метод. Сделать указатель на переменную "актуальное поле"

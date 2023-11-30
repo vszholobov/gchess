@@ -1,5 +1,7 @@
 package board
 
+import "fmt"
+
 const SIZE = 8
 
 type Board struct {
@@ -59,11 +61,27 @@ func (board *Board) Move(
 	return true, &actualBoard
 }
 
-// MakeBoard returns initialized isFilled board
+// isFieldAttackedByOpposedSide checks whether field at given cords is attacked by any figure of opposed side
+func (board *Board) isFieldAttackedByOpposedSide(cords Cords, side FigureSide) bool {
+	// TODO: implement
+	var opposedSide FigureSide
+	if side == White {
+		opposedSide = Black
+	} else {
+		opposedSide = White
+	}
+	fmt.Println(opposedSide)
+	return false
+}
+
+// MakeBoard returns initialized board
 func MakeBoard() Board {
 	board := Board{make([][]Field, SIZE), initValidators()}
-	for i := range board.board {
-		board.board[i] = make([]Field, SIZE)
+	for row := range board.board {
+		board.board[row] = make([]Field, SIZE)
+		for col := 0; col < SIZE; col++ {
+			board.board[row][col] = Field{Cords: Cords{Col: col, Row: row}, Filled: false}
+		}
 	}
 	return board
 }
