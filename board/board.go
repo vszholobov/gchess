@@ -1,8 +1,13 @@
 package board
 
-import "fmt"
+import (
+	mapset "github.com/deckarep/golang-set/v2"
+)
 
-const SIZE = 8
+const ChessboardSize = 8
+
+var lineFiguresToSearch = mapset.NewSet(Queen, Rook)
+var diagonalFiguresToSearch = mapset.NewSet(Queen, Bishop)
 
 type Board struct {
 	board          [][]Field
@@ -11,9 +16,9 @@ type Board struct {
 
 // Copy returns deep Copy of given Board
 func (board *Board) Copy() Board {
-	duplicate := make([][]Field, SIZE)
+	duplicate := make([][]Field, ChessboardSize)
 	for i := range board.board {
-		duplicate[i] = make([]Field, SIZE)
+		duplicate[i] = make([]Field, ChessboardSize)
 		copy(duplicate[i], board.board[i])
 	}
 	return Board{board: duplicate, moveValidators: board.moveValidators}
@@ -61,25 +66,49 @@ func (board *Board) Move(
 	return true, &actualBoard
 }
 
-// isFieldAttackedByOpposedSide checks whether field at given cords is attacked by any figure of opposed side
-func (board *Board) isFieldAttackedByOpposedSide(cords Cords, side FigureSide) bool {
-	// TODO: implement
-	var opposedSide FigureSide
-	if side == White {
-		opposedSide = Black
-	} else {
-		opposedSide = White
+// IsFieldAttackedByOpposedSide checks whether field at given cords is attacked by any figure of opposed side
+func (board *Board) IsFieldAttackedByOpposedSide(departureCords Cords, side FigureSide) bool {
+	isAttacked := false
+	isAttacked = isAttacked || checkLine(board, departureCords, 1, 1, side, diagonalFiguresToSearch)
+	isAttacked = isAttacked || checkLine(board, departureCords, 1, -1, side, diagonalFiguresToSearch)
+	isAttacked = isAttacked || checkLine(board, departureCords, -1, 1, side, diagonalFiguresToSearch)
+	isAttacked = isAttacked || checkLine(board, departureCords, -1, -1, side, diagonalFiguresToSearch)
+	isAttacked = isAttacked || checkLine(board, departureCords, 1, 0, side, lineFiguresToSearch)
+	isAttacked = isAttacked || checkLine(board, departureCords, -1, 0, side, lineFiguresToSearch)
+	isAttacked = isAttacked || checkLine(board, departureCords, 0, 1, side, lineFiguresToSearch)
+	isAttacked = isAttacked || checkLine(board, departureCords, 0, -1, side, lineFiguresToSearch)
+	// TODO: check for king and pawns in the adjacent fields
+	return isAttacked
+}
+
+func checkLine(
+	board *Board,
+	departureCords Cords,
+	colDelta int,
+	rowDelta int,
+	side FigureSide,
+	figuresToSearch mapset.Set[FigureType],
+) bool {
+	col, row := departureCords.Col+colDelta, departureCords.Row+rowDelta
+	for ; 0 <= row && row < ChessboardSize && 0 <= col && col < ChessboardSize; col, row = col+colDelta, row+rowDelta {
+		field := board.GetField(Cords{col, row})
+		if !field.Filled {
+			continue
+		} else if side == field.Figure.FigureSide {
+			return false
+		} else if figuresToSearch.Contains(field.Figure.FigureType) {
+			return true
+		}
 	}
-	fmt.Println(opposedSide)
 	return false
 }
 
 // MakeBoard returns initialized board
 func MakeBoard() Board {
-	board := Board{make([][]Field, SIZE), initValidators()}
+	board := Board{make([][]Field, ChessboardSize), initValidators()}
 	for row := range board.board {
-		board.board[row] = make([]Field, SIZE)
-		for col := 0; col < SIZE; col++ {
+		board.board[row] = make([]Field, ChessboardSize)
+		for col := 0; col < ChessboardSize; col++ {
 			board.board[row][col] = Field{Cords: Cords{Col: col, Row: row}, Filled: false}
 		}
 	}
@@ -92,7 +121,7 @@ func InitDefaultBoard() *Board {
 	// pawn
 	whitePawn := Figure{FigureType: Pawn, FigureSide: White}
 	blackPawn := Figure{FigureType: Pawn, FigureSide: Black}
-	for col := 0; col < SIZE; col++ {
+	for col := 0; col < ChessboardSize; col++ {
 		chessboard.SetField(Field{Figure: whitePawn, Cords: Cords{Col: col, Row: 1}, Filled: true})
 		chessboard.SetField(Field{Figure: blackPawn, Cords: Cords{Col: col, Row: 6}, Filled: true})
 	}
@@ -135,7 +164,7 @@ func InitDefaultBoard() *Board {
 
 	// empty
 	for row := 2; row < 6; row++ {
-		for col := 0; col < SIZE; col++ {
+		for col := 0; col < ChessboardSize; col++ {
 			chessboard.SetField(Field{Cords: Cords{Col: col, Row: row}})
 		}
 	}

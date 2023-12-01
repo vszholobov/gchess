@@ -30,7 +30,7 @@ func TestInitDefaultBoard(t *testing.T) {
 	// pawn
 	whitePawn := board.Figure{FigureType: board.Pawn, FigureSide: board.White, Moved: false}
 	blackPawn := board.Figure{FigureType: board.Pawn, FigureSide: board.Black, Moved: false}
-	for col := 0; col < board.SIZE; col++ {
+	for col := 0; col < board.ChessboardSize; col++ {
 		assert.Equal(t, whitePawn, defaultBoard.GetField(board.Cords{Col: col, Row: 1}).Figure)
 		assert.Equal(t, blackPawn, defaultBoard.GetField(board.Cords{Col: col, Row: 6}).Figure)
 	}
@@ -73,7 +73,7 @@ func TestInitDefaultBoard(t *testing.T) {
 
 	// empty
 	for row := 2; row < 6; row++ {
-		for col := 0; col < board.SIZE; col++ {
+		for col := 0; col < board.ChessboardSize; col++ {
 			assert.False(t, defaultBoard.GetField(board.Cords{Col: col, Row: row}).Filled)
 		}
 	}
@@ -175,7 +175,7 @@ func TestBlackLongCastleValidation(t *testing.T) {
 	blackKingCords := board.Cords{Col: 4, Row: 7}
 	blackKingField := board.Field{Figure: blackKing, Cords: blackKingCords, Filled: true}
 	chessBoard.SetField(blackKingField)
-	blackRook := board.Figure{FigureType: board.Rook, FigureSide: board.White, Moved: false}
+	blackRook := board.Figure{FigureType: board.Rook, FigureSide: board.Black, Moved: false}
 	blackRookCords := board.Cords{Col: 0, Row: 7}
 	blackRookField := board.Field{Figure: blackRook, Cords: blackRookCords, Filled: true}
 	chessBoard.SetField(blackRookField)
@@ -248,4 +248,62 @@ func TestBlackLongCastleValidation_FailRookMovedBefore(t *testing.T) {
 	isCastled := castlingMoveValidator.Validate(&chessBoard, castlingMove)
 
 	assert.False(t, isCastled)
+}
+
+func TestFieldIsAttackedByBishop_MainDiagonal(t *testing.T) {
+	chessBoard := board.MakeBoard()
+
+	whiteBishop := board.Figure{FigureType: board.Bishop, FigureSide: board.White, Moved: true}
+	whiteBishopCords := board.Cords{Col: 0, Row: 0}
+	whiteBishopField := board.Field{Figure: whiteBishop, Cords: whiteBishopCords, Filled: true}
+	chessBoard.SetField(whiteBishopField)
+
+	isAttacked := chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 7, Row: 7}, board.Black)
+	assert.True(t, isAttacked)
+}
+
+func TestFieldIsAttackedByBishop_SideDiagonal(t *testing.T) {
+	chessBoard := board.MakeBoard()
+
+	whiteBishop := board.Figure{FigureType: board.Bishop, FigureSide: board.White, Moved: true}
+	whiteBishopCords := board.Cords{Col: 0, Row: 7}
+	whiteBishopField := board.Field{Figure: whiteBishop, Cords: whiteBishopCords, Filled: true}
+	chessBoard.SetField(whiteBishopField)
+
+	isAttacked := chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 7, Row: 0}, board.Black)
+	assert.True(t, isAttacked)
+}
+
+func TestFieldIsNotAttackedByBishop_AnotherDiagonal(t *testing.T) {
+	chessBoard := board.MakeBoard()
+
+	whiteBishop := board.Figure{FigureType: board.Bishop, FigureSide: board.White, Moved: true}
+	whiteBishopCords := board.Cords{Col: 1, Row: 0}
+	whiteBishopField := board.Field{Figure: whiteBishop, Cords: whiteBishopCords, Filled: true}
+	chessBoard.SetField(whiteBishopField)
+
+	isAttacked := chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 7, Row: 7}, board.Black)
+	assert.False(t, isAttacked)
+}
+
+func TestFieldIsAttackedByRook_SameCol(t *testing.T) {
+	chessBoard := board.MakeBoard()
+	whiteRook := board.Figure{FigureType: board.Rook, FigureSide: board.White, Moved: false}
+	whiteRookCords := board.Cords{Col: 0, Row: 0}
+	whiteRookField := board.Field{Figure: whiteRook, Cords: whiteRookCords, Filled: true}
+	chessBoard.SetField(whiteRookField)
+
+	isAttacked := chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 7, Row: 0}, board.Black)
+	assert.True(t, isAttacked)
+}
+
+func TestFieldIsAttackedByRook_SameRow(t *testing.T) {
+	chessBoard := board.MakeBoard()
+	whiteRook := board.Figure{FigureType: board.Rook, FigureSide: board.White, Moved: false}
+	whiteRookCords := board.Cords{Col: 0, Row: 0}
+	whiteRookField := board.Field{Figure: whiteRook, Cords: whiteRookCords, Filled: true}
+	chessBoard.SetField(whiteRookField)
+
+	isAttacked := chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 0, Row: 7}, board.Black)
+	assert.True(t, isAttacked)
 }

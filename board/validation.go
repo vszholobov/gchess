@@ -57,8 +57,8 @@ type BordersBreachValidator struct{}
 
 func (BordersBreachValidator) Validate(_ *Board, move Move) bool {
 	destinationCords := move.Destination.Cords
-	valid := destinationCords.Col >= 0 && destinationCords.Col < SIZE &&
-		destinationCords.Row >= 0 && destinationCords.Row < SIZE
+	valid := destinationCords.Col >= 0 && destinationCords.Col < ChessboardSize &&
+		destinationCords.Row >= 0 && destinationCords.Row < ChessboardSize
 	return valid
 }
 
@@ -129,7 +129,7 @@ func (DiagonalPathValidator) Validate(chessboard *Board, move Move) bool {
 
 	if (destCol > startCol && destRow < startRow) || (destCol < startCol && destRow > startRow) {
 		for col := startCol; col < destCol; col++ {
-			if chessboard.GetField(Cords{Col: col, Row: SIZE - col - 1}).Filled {
+			if chessboard.GetField(Cords{Col: col, Row: ChessboardSize - col - 1}).Filled {
 				return false
 			}
 		}
@@ -258,7 +258,8 @@ func (CastlingMoveValidator) Validate(board *Board, move Move) bool {
 	}
 
 	// if castle side rook isn't a rook or moved before, then can't castle
-	if rook := (board.GetField(Cords{Col: rookCol, Row: row}).Figure); rook.FigureType != Rook || rook.Moved {
+	c := Cords{Col: rookCol, Row: row}
+	if rook := board.GetField(c).Figure; rook.FigureType != Rook || rook.Moved || rook.FigureSide != king.FigureSide {
 		return false
 	}
 
@@ -272,7 +273,7 @@ func (CastlingMoveValidator) Validate(board *Board, move Move) bool {
 
 	// if any field between the king and the destination are attacked then can't castle
 	for col := min(move.Destination.Cords.Col, kingCol); col <= max(move.Destination.Cords.Col, kingCol); col++ {
-		if board.isFieldAttackedByOpposedSide(Cords{Col: col, Row: row}, king.FigureSide) {
+		if board.IsFieldAttackedByOpposedSide(Cords{Col: col, Row: row}, king.FigureSide) {
 			return false
 		}
 	}
