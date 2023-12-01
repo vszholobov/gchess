@@ -2,6 +2,7 @@ package board
 
 import (
 	mapset "github.com/deckarep/golang-set/v2"
+	"math"
 )
 
 const ChessboardSize = 8
@@ -69,20 +70,26 @@ func (board *Board) Move(
 // IsFieldAttackedByOpposedSide checks whether field at given cords is attacked by any figure of opposed side
 func (board *Board) IsFieldAttackedByOpposedSide(cords Cords, side FigureSide) bool {
 	isAttacked := false
-	isAttacked = isAttacked || checkLine(board, cords, 1, 1, side, diagonalFiguresToSearch)
-	isAttacked = isAttacked || checkLine(board, cords, 1, -1, side, diagonalFiguresToSearch)
-	isAttacked = isAttacked || checkLine(board, cords, -1, 1, side, diagonalFiguresToSearch)
-	isAttacked = isAttacked || checkLine(board, cords, -1, -1, side, diagonalFiguresToSearch)
-	isAttacked = isAttacked || checkLine(board, cords, 1, 0, side, lineFiguresToSearch)
-	isAttacked = isAttacked || checkLine(board, cords, -1, 0, side, lineFiguresToSearch)
-	isAttacked = isAttacked || checkLine(board, cords, 0, 1, side, lineFiguresToSearch)
-	isAttacked = isAttacked || checkLine(board, cords, 0, -1, side, lineFiguresToSearch)
-	isAttacked = isAttacked || checkPawns(board, cords, side)
-	isAttacked = isAttacked || checkKing(cords, side, board)
+	for colDelta := -1; colDelta <= 1; colDelta++ {
+		for rowDelta := -1; rowDelta <= 1; rowDelta++ {
+			if colDelta == 0 && rowDelta == 0 {
+				continue
+			}
+			var figuresToSearch mapset.Set[FigureType]
+			if math.Abs(float64(colDelta)) == math.Abs(float64(rowDelta)) {
+				figuresToSearch = diagonalFiguresToSearch
+			} else {
+				figuresToSearch = lineFiguresToSearch
+			}
+			isAttacked = isAttacked || isLineAttacked(board, cords, colDelta, rowDelta, side, figuresToSearch)
+		}
+	}
+	isAttacked = isAttacked || isAttackedByPawn(board, cords, side)
+	isAttacked = isAttacked || isAttackedByKing(board, cords, side)
 	return isAttacked
 }
 
-func checkKing(cords Cords, side FigureSide, board *Board) bool {
+func isAttackedByKing(board *Board, cords Cords, side FigureSide) bool {
 	for row := cords.Row - 1; row <= cords.Row+1; row++ {
 		for col := cords.Col - 1; col <= cords.Col+1; col++ {
 			curCords := Cords{Col: col, Row: row}
@@ -99,7 +106,7 @@ func checkKing(cords Cords, side FigureSide, board *Board) bool {
 	return false
 }
 
-func checkLine(
+func isLineAttacked(
 	board *Board,
 	cords Cords,
 	colDelta int,
@@ -121,7 +128,7 @@ func checkLine(
 	return false
 }
 
-func checkPawns(
+func isAttackedByPawn(
 	board *Board,
 	cords Cords,
 	side FigureSide,
@@ -136,10 +143,10 @@ func checkPawns(
 	if row := cords.Row + rowDelta; 0 <= row && row < ChessboardSize {
 		isAttackedByPawn := false
 		if col := cords.Col - 1; col >= 0 {
-			isAttackedByPawn = isAttackedByPawn || checkIsAttackedByPawn(board, Cords{Col: col, Row: row}, side)
+			isAttackedByPawn = isAttackedByPawn || isFieldAttackedByPawn(board, Cords{Col: col, Row: row}, side)
 		}
 		if col := cords.Col + 1; col < ChessboardSize {
-			isAttackedByPawn = isAttackedByPawn || checkIsAttackedByPawn(board, Cords{Col: col, Row: row}, side)
+			isAttackedByPawn = isAttackedByPawn || isFieldAttackedByPawn(board, Cords{Col: col, Row: row}, side)
 		}
 		return isAttackedByPawn
 	} else {
@@ -147,7 +154,7 @@ func checkPawns(
 	}
 }
 
-func checkIsAttackedByPawn(board *Board, cords Cords, side FigureSide) bool {
+func isFieldAttackedByPawn(board *Board, cords Cords, side FigureSide) bool {
 	field := board.GetField(cords)
 	figure := field.Figure
 	return field.Filled && figure.FigureSide != side && figure.FigureType == Pawn
