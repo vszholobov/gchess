@@ -67,29 +67,47 @@ func (board *Board) Move(
 }
 
 // IsFieldAttackedByOpposedSide checks whether field at given cords is attacked by any figure of opposed side
-func (board *Board) IsFieldAttackedByOpposedSide(departureCords Cords, side FigureSide) bool {
+func (board *Board) IsFieldAttackedByOpposedSide(cords Cords, side FigureSide) bool {
 	isAttacked := false
-	isAttacked = isAttacked || checkLine(board, departureCords, 1, 1, side, diagonalFiguresToSearch)
-	isAttacked = isAttacked || checkLine(board, departureCords, 1, -1, side, diagonalFiguresToSearch)
-	isAttacked = isAttacked || checkLine(board, departureCords, -1, 1, side, diagonalFiguresToSearch)
-	isAttacked = isAttacked || checkLine(board, departureCords, -1, -1, side, diagonalFiguresToSearch)
-	isAttacked = isAttacked || checkLine(board, departureCords, 1, 0, side, lineFiguresToSearch)
-	isAttacked = isAttacked || checkLine(board, departureCords, -1, 0, side, lineFiguresToSearch)
-	isAttacked = isAttacked || checkLine(board, departureCords, 0, 1, side, lineFiguresToSearch)
-	isAttacked = isAttacked || checkLine(board, departureCords, 0, -1, side, lineFiguresToSearch)
-	// TODO: check for king and pawns in the adjacent fields
+	isAttacked = isAttacked || checkLine(board, cords, 1, 1, side, diagonalFiguresToSearch)
+	isAttacked = isAttacked || checkLine(board, cords, 1, -1, side, diagonalFiguresToSearch)
+	isAttacked = isAttacked || checkLine(board, cords, -1, 1, side, diagonalFiguresToSearch)
+	isAttacked = isAttacked || checkLine(board, cords, -1, -1, side, diagonalFiguresToSearch)
+	isAttacked = isAttacked || checkLine(board, cords, 1, 0, side, lineFiguresToSearch)
+	isAttacked = isAttacked || checkLine(board, cords, -1, 0, side, lineFiguresToSearch)
+	isAttacked = isAttacked || checkLine(board, cords, 0, 1, side, lineFiguresToSearch)
+	isAttacked = isAttacked || checkLine(board, cords, 0, -1, side, lineFiguresToSearch)
+	isAttacked = isAttacked || checkPawns(board, cords, side)
+	isAttacked = isAttacked || checkKing(cords, side, board)
 	return isAttacked
+}
+
+func checkKing(cords Cords, side FigureSide, board *Board) bool {
+	for row := cords.Row - 1; row <= cords.Row+1; row++ {
+		for col := cords.Col - 1; col <= cords.Col+1; col++ {
+			curCords := Cords{Col: col, Row: row}
+			if curCords == cords || ChessboardSize <= row || row < 0 || ChessboardSize <= col || col < 0 {
+				continue
+			}
+			field := board.GetField(curCords)
+			figure := field.Figure
+			if field.Filled && figure.FigureSide != side && figure.FigureType == King {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func checkLine(
 	board *Board,
-	departureCords Cords,
+	cords Cords,
 	colDelta int,
 	rowDelta int,
 	side FigureSide,
 	figuresToSearch mapset.Set[FigureType],
 ) bool {
-	col, row := departureCords.Col+colDelta, departureCords.Row+rowDelta
+	col, row := cords.Col+colDelta, cords.Row+rowDelta
 	for ; 0 <= row && row < ChessboardSize && 0 <= col && col < ChessboardSize; col, row = col+colDelta, row+rowDelta {
 		field := board.GetField(Cords{col, row})
 		if !field.Filled {
@@ -101,6 +119,38 @@ func checkLine(
 		}
 	}
 	return false
+}
+
+func checkPawns(
+	board *Board,
+	cords Cords,
+	side FigureSide,
+) bool {
+	var rowDelta int
+	if side == White {
+		rowDelta = 1
+	} else {
+		rowDelta = -1
+	}
+
+	if row := cords.Row + rowDelta; 0 <= row && row < ChessboardSize {
+		isAttackedByPawn := false
+		if col := cords.Col - 1; col >= 0 {
+			isAttackedByPawn = isAttackedByPawn || checkIsAttackedByPawn(board, Cords{Col: col, Row: row}, side)
+		}
+		if col := cords.Col + 1; col < ChessboardSize {
+			isAttackedByPawn = isAttackedByPawn || checkIsAttackedByPawn(board, Cords{Col: col, Row: row}, side)
+		}
+		return isAttackedByPawn
+	} else {
+		return false
+	}
+}
+
+func checkIsAttackedByPawn(board *Board, cords Cords, side FigureSide) bool {
+	field := board.GetField(cords)
+	figure := field.Figure
+	return field.Filled && figure.FigureSide != side && figure.FigureType == Pawn
 }
 
 // MakeBoard returns initialized board

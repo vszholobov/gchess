@@ -293,17 +293,34 @@ func TestFieldIsAttackedByRook_SameCol(t *testing.T) {
 	whiteRookField := board.Field{Figure: whiteRook, Cords: whiteRookCords, Filled: true}
 	chessBoard.SetField(whiteRookField)
 
-	isAttacked := chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 7, Row: 0}, board.Black)
-	assert.True(t, isAttacked)
+	assert.True(t, chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 7, Row: 0}, board.Black))
+	assert.True(t, chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 0, Row: 7}, board.Black))
 }
 
-func TestFieldIsAttackedByRook_SameRow(t *testing.T) {
+func TestFieldIsAttackedByPawn(t *testing.T) {
 	chessBoard := board.MakeBoard()
-	whiteRook := board.Figure{FigureType: board.Rook, FigureSide: board.White, Moved: false}
-	whiteRookCords := board.Cords{Col: 0, Row: 0}
-	whiteRookField := board.Field{Figure: whiteRook, Cords: whiteRookCords, Filled: true}
-	chessBoard.SetField(whiteRookField)
+	whitePawn := board.Figure{FigureType: board.Pawn, FigureSide: board.White, Moved: false}
+	whitePawnCords := board.Cords{Col: 1, Row: 1}
+	whitePawnField := board.Field{Figure: whitePawn, Cords: whitePawnCords, Filled: true}
+	chessBoard.SetField(whitePawnField)
 
-	isAttacked := chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 0, Row: 7}, board.Black)
-	assert.True(t, isAttacked)
+	assert.True(t, chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 0, Row: 2}, board.Black))
+	assert.True(t, chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 2, Row: 2}, board.Black))
+}
+
+func TestFieldIsAttackedByKing(t *testing.T) {
+	chessBoard := board.MakeBoard()
+	whiteKing := board.Figure{FigureType: board.King, FigureSide: board.White, Moved: false}
+	whiteKingCords := board.Cords{Col: 1, Row: 1}
+	whiteKingField := board.Field{Figure: whiteKing, Cords: whiteKingCords, Filled: true}
+	chessBoard.SetField(whiteKingField)
+
+	assert.True(t, chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 0, Row: 0}, board.Black))
+	assert.True(t, chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 0, Row: 1}, board.Black))
+	assert.True(t, chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 0, Row: 2}, board.Black))
+	assert.True(t, chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 1, Row: 2}, board.Black))
+	assert.True(t, chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 2, Row: 2}, board.Black))
+	assert.True(t, chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 2, Row: 1}, board.Black))
+	assert.True(t, chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 2, Row: 0}, board.Black))
+	assert.True(t, chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 1, Row: 0}, board.Black))
 }
