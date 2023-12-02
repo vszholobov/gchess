@@ -162,7 +162,7 @@ func TestWhiteLongCastleValidation(t *testing.T) {
 	chessBoard.SetField(whiteRookField)
 	castlingMoveValidator := board.CastlingMoveValidator{}
 	destinationCastleField := chessBoard.GetField(board.Cords{Col: 2, Row: 0})
-	castlingMove := board.Move{Departure: whiteKingField, Destination: destinationCastleField}
+	castlingMove := board.MakeMove(whiteKingField, destinationCastleField)
 
 	isCastled := castlingMoveValidator.Validate(&chessBoard, castlingMove)
 
@@ -181,7 +181,7 @@ func TestBlackLongCastleValidation(t *testing.T) {
 	chessBoard.SetField(blackRookField)
 	castlingMoveValidator := board.CastlingMoveValidator{}
 	destinationCastleField := chessBoard.GetField(board.Cords{Col: 2, Row: 7})
-	castlingMove := board.Move{Departure: blackKingField, Destination: destinationCastleField}
+	castlingMove := board.MakeMove(blackKingField, destinationCastleField)
 
 	isCastled := castlingMoveValidator.Validate(&chessBoard, castlingMove)
 
@@ -205,7 +205,7 @@ func TestWhiteLongCastleValidation_FailKnightFilledBetween(t *testing.T) {
 	chessBoard.SetField(whiteRookField)
 	castlingMoveValidator := board.CastlingMoveValidator{}
 	destinationCastleField := chessBoard.GetField(board.Cords{Col: 2, Row: 0})
-	castlingMove := board.Move{Departure: whiteKingField, Destination: destinationCastleField}
+	castlingMove := board.MakeMove(whiteKingField, destinationCastleField)
 
 	isCastled := castlingMoveValidator.Validate(&chessBoard, castlingMove)
 
@@ -224,7 +224,7 @@ func TestBlackLongCastleValidation_FailKingMovedBefore(t *testing.T) {
 	chessBoard.SetField(blackRookField)
 	castlingMoveValidator := board.CastlingMoveValidator{}
 	destinationCastleField := chessBoard.GetField(board.Cords{Col: 2, Row: 7})
-	castlingMove := board.Move{Departure: blackKingField, Destination: destinationCastleField}
+	castlingMove := board.MakeMove(blackKingField, destinationCastleField)
 
 	isCastled := castlingMoveValidator.Validate(&chessBoard, castlingMove)
 
@@ -243,7 +243,7 @@ func TestBlackLongCastleValidation_FailRookMovedBefore(t *testing.T) {
 	chessBoard.SetField(blackRookField)
 	castlingMoveValidator := board.CastlingMoveValidator{}
 	destinationCastleField := chessBoard.GetField(board.Cords{Col: 2, Row: 7})
-	castlingMove := board.Move{Departure: blackKingField, Destination: destinationCastleField}
+	castlingMove := board.MakeMove(blackKingField, destinationCastleField)
 
 	isCastled := castlingMoveValidator.Validate(&chessBoard, castlingMove)
 
@@ -323,4 +323,94 @@ func TestFieldIsAttackedByKing(t *testing.T) {
 	assert.True(t, chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 2, Row: 1}, board.Black))
 	assert.True(t, chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 2, Row: 0}, board.Black))
 	assert.True(t, chessBoard.IsFieldAttackedByOpposedSide(board.Cords{Col: 1, Row: 0}, board.Black))
+}
+
+func TestMakeMove_LongCastleMove(t *testing.T) {
+	chessBoard := board.MakeBoard()
+	whiteKing := board.Figure{FigureType: board.King, FigureSide: board.White, Moved: false}
+	whiteKingCords := board.Cords{Col: 4, Row: 0}
+	whiteKingField := board.Field{Figure: whiteKing, Cords: whiteKingCords, Filled: true}
+	chessBoard.SetField(whiteKingField)
+	castleCords := board.Cords{Col: 2, Row: 0}
+	assert.IsType(t, board.CastleMove{}, board.MakeMove(whiteKingField, board.Field{Cords: castleCords}))
+}
+
+func TestMakeMove_CastleMove(t *testing.T) {
+	chessBoard := board.MakeBoard()
+	whiteKing := board.Figure{FigureType: board.King, FigureSide: board.White, Moved: false}
+	whiteKingCords := board.Cords{Col: 4, Row: 0}
+	whiteKingField := board.Field{Figure: whiteKing, Cords: whiteKingCords, Filled: true}
+	chessBoard.SetField(whiteKingField)
+	castleCords := board.Cords{Col: 6, Row: 0}
+	assert.IsType(t, board.CastleMove{}, board.MakeMove(whiteKingField, board.Field{Cords: castleCords}))
+}
+
+func TestLongCastleMove(t *testing.T) {
+	chessBoard := board.MakeBoard()
+	whiteKing := board.Figure{FigureType: board.King, FigureSide: board.White, Moved: false}
+	whiteKingCords := board.Cords{Col: 4, Row: 0}
+	whiteKingField := board.Field{Figure: whiteKing, Cords: whiteKingCords, Filled: true}
+	chessBoard.SetField(whiteKingField)
+	whiteRook := board.Figure{FigureType: board.Rook, FigureSide: board.White, Moved: false}
+	whiteRookCords := board.Cords{Col: 0, Row: 0}
+	whiteRookField := board.Field{Figure: whiteRook, Cords: whiteRookCords, Filled: true}
+	chessBoard.SetField(whiteRookField)
+	castleCords := board.Cords{Col: 2, Row: 0}
+	futureRookCords := board.Cords{Col: 3, Row: 0}
+
+	isMoved, actualBoard := chessBoard.Move(whiteKingCords, castleCords, board.White)
+
+	assert.True(t, isMoved)
+	actualCastleField := actualBoard.GetField(castleCords)
+	assert.True(t, actualCastleField.Filled)
+	assert.Equal(
+		t,
+		board.Figure{FigureType: board.King, FigureSide: board.White, Moved: true},
+		actualCastleField.Figure,
+	)
+	actualWhiteRookDepartureField := actualBoard.GetField(whiteRookCords)
+	assert.False(t, actualWhiteRookDepartureField.Filled)
+	assert.Equal(t, board.Figure{}, actualWhiteRookDepartureField.Figure)
+	actualWhiteRookField := actualBoard.GetField(futureRookCords)
+	assert.True(t, actualWhiteRookField.Filled)
+	assert.Equal(
+		t,
+		board.Figure{FigureType: board.Rook, FigureSide: board.White, Moved: true},
+		actualWhiteRookField.Figure,
+	)
+}
+
+func TestShortCastleMove(t *testing.T) {
+	chessBoard := board.MakeBoard()
+	whiteKing := board.Figure{FigureType: board.King, FigureSide: board.White, Moved: false}
+	whiteKingCords := board.Cords{Col: 4, Row: 0}
+	whiteKingField := board.Field{Figure: whiteKing, Cords: whiteKingCords, Filled: true}
+	chessBoard.SetField(whiteKingField)
+	whiteRook := board.Figure{FigureType: board.Rook, FigureSide: board.White, Moved: false}
+	whiteRookCords := board.Cords{Col: 7, Row: 0}
+	whiteRookField := board.Field{Figure: whiteRook, Cords: whiteRookCords, Filled: true}
+	chessBoard.SetField(whiteRookField)
+	castleCords := board.Cords{Col: 6, Row: 0}
+	futureRookCords := board.Cords{Col: 5, Row: 0}
+
+	isMoved, actualBoard := chessBoard.Move(whiteKingCords, castleCords, board.White)
+
+	assert.True(t, isMoved)
+	actualCastleField := actualBoard.GetField(castleCords)
+	assert.True(t, actualCastleField.Filled)
+	assert.Equal(
+		t,
+		board.Figure{FigureType: board.King, FigureSide: board.White, Moved: true},
+		actualCastleField.Figure,
+	)
+	actualWhiteRookDepartureField := actualBoard.GetField(whiteRookCords)
+	assert.False(t, actualWhiteRookDepartureField.Filled)
+	assert.Equal(t, board.Figure{}, actualWhiteRookDepartureField.Figure)
+	actualWhiteRookField := actualBoard.GetField(futureRookCords)
+	assert.True(t, actualWhiteRookField.Filled)
+	assert.Equal(
+		t,
+		board.Figure{FigureType: board.Rook, FigureSide: board.White, Moved: true},
+		actualWhiteRookField.Figure,
+	)
 }

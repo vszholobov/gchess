@@ -56,13 +56,21 @@ func (board *Board) Move(
 
 	departure.Figure.Moved = true
 
-	// Перемещение. TODO: учесть рокировку и повышение фигуры
 	newDeparture := Field{Cords: departure.Cords, Filled: false}
 	newDestination := Field{Figure: departure.Figure, Cords: destination.Cords, Filled: true}
-
 	actualBoard := board.Copy()
 	actualBoard.SetField(newDeparture)
 	actualBoard.SetField(newDestination)
+
+	// TODO: учесть повышение фигуры
+	if castleMove, isCastleMove := move.(CastleMove); isCastleMove {
+		rook := board.GetField(castleMove.RookDepartureCords()).Figure
+		rook.Moved = true
+		newRookDeparture := Field{Cords: castleMove.RookDepartureCords(), Filled: false}
+		newRookDestination := Field{Figure: rook, Cords: castleMove.RookDestinationCords(), Filled: true}
+		actualBoard.SetField(newRookDeparture)
+		actualBoard.SetField(newRookDestination)
+	}
 
 	return true, &actualBoard
 }
@@ -227,4 +235,12 @@ func InitDefaultBoard() *Board {
 	}
 
 	return &chessboard
+}
+
+func GetDefaultRowBySide(side FigureSide) int {
+	if side == White {
+		return 0
+	} else {
+		return 7
+	}
 }

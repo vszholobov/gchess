@@ -1,37 +1,86 @@
 package board
 
-type Move struct {
-	Departure      Field
-	Destination    Field
-	representation string
+import "math"
+
+type Move interface {
+	Departure() Field
+	Destination() Field
+	String() string
 }
 
 // MakeMove TODO: make representation
 func MakeMove(departure Field, destination Field) Move {
-	return Move{Departure: departure, Destination: destination, representation: ""}
+	colDistance := math.Abs(float64(departure.Cords.Col - destination.Cords.Col))
+	if departure.Figure.FigureType == King && colDistance > 1 {
+		row := GetDefaultRowBySide(departure.Figure.FigureSide)
+		var rookDepartureCords Cords
+		var rookDestinationCords Cords
+		if destination.Cords.Col == 2 {
+			// long side castle
+			rookDepartureCords = Cords{Col: 0, Row: row}
+			rookDestinationCords = Cords{Col: 3, Row: row}
+		} else {
+			// short side castle
+			rookDepartureCords = Cords{Col: 7, Row: row}
+			rookDestinationCords = Cords{Col: 5, Row: row}
+		}
+		return CastleMove{
+			departure:            departure,
+			destination:          destination,
+			stringRepresentation: "",
+			rookDepartureCords:   rookDepartureCords,
+			rookDestinationCords: rookDestinationCords,
+		}
+	} else {
+		return DefaultMove{departure: departure, destination: destination, stringRepresentation: ""}
+	}
 }
 
-func (move Move) String() string {
-	return move.representation
+type DefaultMove struct {
+	departure            Field
+	destination          Field
+	stringRepresentation string
 }
 
-//type KillMove struct{}
-//
-//func (KillMove) stringRepresentation() string {
-//	//TODO implement me
-//	panic("implement me")
-//}
-//
-//type PromoteMove struct{}
-//
-//func (PromoteMove) stringRepresentation() string {
-//	//TODO implement me
-//	panic("implement me")
-//}
-//
-//type CastleMove struct{}
-//
-//func (CastleMove) stringRepresentation() string {
-//	//TODO implement me
-//	panic("implement me")
-//}
+func (move DefaultMove) Departure() Field {
+	return move.departure
+}
+
+func (move DefaultMove) Destination() Field {
+	return move.destination
+}
+
+func (move DefaultMove) String() string {
+	return move.stringRepresentation
+}
+
+type CastleMove struct {
+	departure            Field
+	destination          Field
+	stringRepresentation string
+	rookDepartureCords   Cords
+	rookDestinationCords Cords
+}
+
+func (move CastleMove) String() string {
+	return move.stringRepresentation
+}
+
+func (move CastleMove) Departure() Field {
+	return move.departure
+}
+
+func (move CastleMove) Destination() Field {
+	return move.destination
+}
+
+func (move CastleMove) RookDepartureCords() Cords {
+	return move.rookDepartureCords
+}
+
+func (move CastleMove) RookDestinationCords() Cords {
+	return move.rookDestinationCords
+}
+
+// TODO: type KillMove struct{}
+// TODO: type PromoteMove struct{}
