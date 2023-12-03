@@ -414,3 +414,180 @@ func TestShortCastleMove(t *testing.T) {
 		actualWhiteRookField.Figure,
 	)
 }
+
+func TestKingIsNotAttackedAfterKingMove(t *testing.T) {
+	chessBoard := board.MakeBoard()
+	whiteKing := board.Figure{FigureType: board.King, FigureSide: board.White, Moved: false}
+	whiteKingCords := board.Cords{Col: 4, Row: 0}
+	whiteKingField := board.Field{Figure: whiteKing, Cords: whiteKingCords, Filled: true}
+	chessBoard.SetField(whiteKingField)
+	destinationCords := board.Cords{Col: 3, Row: 0}
+
+	destinationField := chessBoard.GetField(destinationCords)
+	kingMove := board.MakeMove(whiteKingField, destinationField)
+
+	validator := board.KingIsNotAttackedAfterMoveValidator{}
+	kingIsAttacked := !validator.Validate(&chessBoard, kingMove)
+
+	assert.False(t, kingIsAttacked)
+}
+
+func TestKingIsAttackedAfterKingMove_KingAlreadyAttacked(t *testing.T) {
+	chessBoard := board.MakeBoard()
+
+	blackRook := board.Figure{FigureType: board.Rook, FigureSide: board.Black, Moved: true}
+	blackRookCords := board.Cords{Col: 0, Row: 0}
+	blackRookField := board.Field{Figure: blackRook, Cords: blackRookCords, Filled: true}
+	chessBoard.SetField(blackRookField)
+
+	whiteKing := board.Figure{FigureType: board.King, FigureSide: board.White, Moved: false}
+	whiteKingCords := board.Cords{Col: 4, Row: 0}
+	whiteKingField := board.Field{Figure: whiteKing, Cords: whiteKingCords, Filled: true}
+	chessBoard.SetField(whiteKingField)
+	destinationCords := board.Cords{Col: 3, Row: 0}
+
+	destinationField := chessBoard.GetField(destinationCords)
+	kingMove := board.MakeMove(whiteKingField, destinationField)
+
+	validator := board.KingIsNotAttackedAfterMoveValidator{}
+	kingIsAttacked := !validator.Validate(&chessBoard, kingMove)
+
+	assert.True(t, kingIsAttacked)
+}
+
+func TestKingIsAttackedAfterKingMove_KingMovedToAttackedField(t *testing.T) {
+	chessBoard := board.MakeBoard()
+
+	blackRook := board.Figure{FigureType: board.Rook, FigureSide: board.Black, Moved: true}
+	blackRookCords := board.Cords{Col: 0, Row: 1}
+	blackRookField := board.Field{Figure: blackRook, Cords: blackRookCords, Filled: true}
+	chessBoard.SetField(blackRookField)
+
+	whiteKing := board.Figure{FigureType: board.King, FigureSide: board.White, Moved: false}
+	whiteKingCords := board.Cords{Col: 4, Row: 0}
+	whiteKingField := board.Field{Figure: whiteKing, Cords: whiteKingCords, Filled: true}
+	chessBoard.SetField(whiteKingField)
+	destinationCords := board.Cords{Col: 4, Row: 1}
+
+	destinationField := chessBoard.GetField(destinationCords)
+	kingMove := board.MakeMove(whiteKingField, destinationField)
+
+	validator := board.KingIsNotAttackedAfterMoveValidator{}
+	kingIsAttacked := !validator.Validate(&chessBoard, kingMove)
+
+	assert.True(t, kingIsAttacked)
+}
+
+func TestKingIsAttacked_CoveringFigureMoved(t *testing.T) {
+	chessBoard := board.MakeBoard()
+
+	blackRook := board.Figure{FigureType: board.Rook, FigureSide: board.Black, Moved: true}
+	blackRookCords := board.Cords{Col: 0, Row: 0}
+	blackRookField := board.Field{Figure: blackRook, Cords: blackRookCords, Filled: true}
+	chessBoard.SetField(blackRookField)
+
+	whiteKing := board.Figure{FigureType: board.King, FigureSide: board.White, Moved: false}
+	whiteKingCords := board.Cords{Col: 4, Row: 0}
+	whiteKingField := board.Field{Figure: whiteKing, Cords: whiteKingCords, Filled: true}
+	chessBoard.SetField(whiteKingField)
+
+	whiteBishop := board.Figure{FigureType: board.Bishop, FigureSide: board.White, Moved: false}
+	whiteBishopCords := board.Cords{Col: 3, Row: 0}
+	whiteBishopField := board.Field{Figure: whiteBishop, Cords: whiteBishopCords, Filled: true}
+	chessBoard.SetField(whiteBishopField)
+
+	destinationCords := board.Cords{Col: 4, Row: 1}
+
+	destinationField := chessBoard.GetField(destinationCords)
+	bishopMove := board.MakeMove(whiteBishopField, destinationField)
+
+	validator := board.KingIsNotAttackedAfterMoveValidator{}
+	kingIsAttacked := !validator.Validate(&chessBoard, bishopMove)
+
+	assert.True(t, kingIsAttacked)
+}
+
+func TestKingIsNotAttacked_KingAlreadyAttacked_AttackingFigureKilled(t *testing.T) {
+	chessBoard := board.MakeBoard()
+
+	blackRook := board.Figure{FigureType: board.Rook, FigureSide: board.Black, Moved: true}
+	blackRookCords := board.Cords{Col: 0, Row: 0}
+	blackRookField := board.Field{Figure: blackRook, Cords: blackRookCords, Filled: true}
+	chessBoard.SetField(blackRookField)
+
+	whiteKing := board.Figure{FigureType: board.King, FigureSide: board.White, Moved: false}
+	whiteKingCords := board.Cords{Col: 4, Row: 0}
+	whiteKingField := board.Field{Figure: whiteKing, Cords: whiteKingCords, Filled: true}
+	chessBoard.SetField(whiteKingField)
+
+	whiteBishop := board.Figure{FigureType: board.Bishop, FigureSide: board.White, Moved: false}
+	whiteBishopCords := board.Cords{Col: 1, Row: 1}
+	whiteBishopField := board.Field{Figure: whiteBishop, Cords: whiteBishopCords, Filled: true}
+	chessBoard.SetField(whiteBishopField)
+
+	bishopMove := board.MakeMove(whiteBishopField, blackRookField)
+
+	validator := board.KingIsNotAttackedAfterMoveValidator{}
+	kingIsAttacked := !validator.Validate(&chessBoard, bishopMove)
+
+	assert.False(t, kingIsAttacked)
+}
+
+func TestKingIsAttacked_KingAlreadyAttacked_AttackingFigureKilledByCoveringPiece_AnotherAttackerOpened(t *testing.T) {
+	chessBoard := board.MakeBoard()
+
+	blackRook := board.Figure{FigureType: board.Rook, FigureSide: board.Black, Moved: true}
+	blackRookCords := board.Cords{Col: 0, Row: 0}
+	blackRookField := board.Field{Figure: blackRook, Cords: blackRookCords, Filled: true}
+	chessBoard.SetField(blackRookField)
+
+	blackQueen := board.Figure{FigureType: board.Queen, FigureSide: board.Black, Moved: true}
+	blackQueenCords := board.Cords{Col: 4, Row: 5}
+	blackQueenField := board.Field{Figure: blackQueen, Cords: blackQueenCords, Filled: true}
+	chessBoard.SetField(blackQueenField)
+
+	whiteKing := board.Figure{FigureType: board.King, FigureSide: board.White, Moved: false}
+	whiteKingCords := board.Cords{Col: 4, Row: 0}
+	whiteKingField := board.Field{Figure: whiteKing, Cords: whiteKingCords, Filled: true}
+	chessBoard.SetField(whiteKingField)
+
+	whiteBishop := board.Figure{FigureType: board.Bishop, FigureSide: board.White, Moved: false}
+	whiteBishopCords := board.Cords{Col: 4, Row: 4}
+	whiteBishopField := board.Field{Figure: whiteBishop, Cords: whiteBishopCords, Filled: true}
+	chessBoard.SetField(whiteBishopField)
+
+	bishopMove := board.MakeMove(whiteBishopField, blackRookField)
+
+	validator := board.KingIsNotAttackedAfterMoveValidator{}
+	kingIsAttacked := !validator.Validate(&chessBoard, bishopMove)
+
+	assert.True(t, kingIsAttacked)
+}
+
+func TestKingIsNotAttacked_KingAlreadyAttacked_KingCovered(t *testing.T) {
+	chessBoard := board.MakeBoard()
+
+	blackRook := board.Figure{FigureType: board.Rook, FigureSide: board.Black, Moved: true}
+	blackRookCords := board.Cords{Col: 0, Row: 0}
+	blackRookField := board.Field{Figure: blackRook, Cords: blackRookCords, Filled: true}
+	chessBoard.SetField(blackRookField)
+
+	whiteKing := board.Figure{FigureType: board.King, FigureSide: board.White, Moved: false}
+	whiteKingCords := board.Cords{Col: 4, Row: 0}
+	whiteKingField := board.Field{Figure: whiteKing, Cords: whiteKingCords, Filled: true}
+	chessBoard.SetField(whiteKingField)
+
+	whiteBishop := board.Figure{FigureType: board.Bishop, FigureSide: board.White, Moved: false}
+	whiteBishopCords := board.Cords{Col: 4, Row: 1}
+	whiteBishopField := board.Field{Figure: whiteBishop, Cords: whiteBishopCords, Filled: true}
+	chessBoard.SetField(whiteBishopField)
+
+	destinationCords := board.Cords{Col: 3, Row: 0}
+	destinationField := chessBoard.GetField(destinationCords)
+	bishopMove := board.MakeMove(whiteBishopField, destinationField)
+
+	validator := board.KingIsNotAttackedAfterMoveValidator{}
+	kingIsAttacked := !validator.Validate(&chessBoard, bishopMove)
+
+	assert.False(t, kingIsAttacked)
+}

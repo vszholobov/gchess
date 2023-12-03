@@ -13,6 +13,16 @@ var diagonalFiguresToSearch = mapset.NewSet(Queen, Bishop)
 type Board struct {
 	board          [][]Field
 	moveValidators map[FigureType][]MoveValidator
+	whiteKingCords *Cords
+	blackKingCords *Cords
+}
+
+func (board *Board) GetKingCords(kingSide FigureSide) *Cords {
+	if kingSide == White {
+		return board.whiteKingCords
+	} else {
+		return board.blackKingCords
+	}
 }
 
 // Copy returns deep Copy of given Board
@@ -22,7 +32,12 @@ func (board *Board) Copy() Board {
 		duplicate[i] = make([]Field, ChessboardSize)
 		copy(duplicate[i], board.board[i])
 	}
-	return Board{board: duplicate, moveValidators: board.moveValidators}
+	return Board{
+		board:          duplicate,
+		moveValidators: board.moveValidators,
+		whiteKingCords: board.whiteKingCords,
+		blackKingCords: board.blackKingCords,
+	}
 }
 
 // GetField returns Field at given Cords
@@ -33,6 +48,13 @@ func (board *Board) GetField(cords Cords) Field {
 // SetField puts given Field to given Cords
 func (board *Board) SetField(field Field) {
 	board.board[field.Cords.Row][field.Cords.Col] = field
+	if field.Figure.FigureType == King {
+		if field.Figure.FigureSide == White {
+			board.whiteKingCords = &field.Cords
+		} else {
+			board.blackKingCords = &field.Cords
+		}
+	}
 }
 
 func (board *Board) Move(
@@ -41,23 +63,24 @@ func (board *Board) Move(
 	moveSide FigureSide,
 ) (bool, *Board) {
 	departure := board.GetField(departureCords)
-	if departure.Figure.FigureSide != moveSide {
+	movingFigure := departure.Figure
+	if movingFigure.FigureSide != moveSide {
 		return false, nil
 	}
 	destination := board.GetField(destinationCords)
 	move := MakeMove(departure, destination)
 
-	for _, validator := range board.moveValidators[departure.Figure.FigureType] {
+	for _, validator := range board.moveValidators[movingFigure.FigureType] {
 		validMove := validator.Validate(board, move)
 		if !validMove {
 			return false, nil
 		}
 	}
 
-	departure.Figure.Moved = true
+	movingFigure.Moved = true
 
 	newDeparture := Field{Cords: departure.Cords, Filled: false}
-	newDestination := Field{Figure: departure.Figure, Cords: destination.Cords, Filled: true}
+	newDestination := Field{Figure: movingFigure, Cords: destination.Cords, Filled: true}
 	actualBoard := board.Copy()
 	actualBoard.SetField(newDeparture)
 	actualBoard.SetField(newDestination)
@@ -70,6 +93,14 @@ func (board *Board) Move(
 		newRookDestination := Field{Figure: rook, Cords: castleMove.RookDestinationCords(), Filled: true}
 		actualBoard.SetField(newRookDeparture)
 		actualBoard.SetField(newRookDestination)
+	}
+
+	if movingFigure.FigureType == King {
+		if movingFigure.FigureSide == White {
+			actualBoard.whiteKingCords = &destinationCords
+		} else {
+			actualBoard.blackKingCords = &destinationCords
+		}
 	}
 
 	return true, &actualBoard
@@ -170,7 +201,12 @@ func isFieldAttackedByPawn(board *Board, cords Cords, side FigureSide) bool {
 
 // MakeBoard returns initialized board
 func MakeBoard() Board {
-	board := Board{make([][]Field, ChessboardSize), initValidators()}
+	board := Board{
+		board:          make([][]Field, ChessboardSize),
+		moveValidators: initValidators(),
+		whiteKingCords: nil,
+		blackKingCords: nil,
+	}
 	for row := range board.board {
 		board.board[row] = make([]Field, ChessboardSize)
 		for col := 0; col < ChessboardSize; col++ {

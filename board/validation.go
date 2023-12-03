@@ -14,6 +14,7 @@ func initValidators() map[FigureType][]MoveValidator {
 		NotAllyChessmanValidator{},
 		KingMoveValidator{},
 		CastlingMoveValidator{},
+		KingIsNotAttackedAfterMoveValidator{},
 	}
 	validators[Pawn] = []MoveValidator{
 		BordersBreachValidator{},
@@ -21,6 +22,7 @@ func initValidators() map[FigureType][]MoveValidator {
 		NotAllyChessmanValidator{},
 		LinePathValidator{},
 		PawnMoveValidator{},
+		KingIsNotAttackedAfterMoveValidator{},
 	}
 	validators[Rook] = []MoveValidator{
 		BordersBreachValidator{},
@@ -28,12 +30,14 @@ func initValidators() map[FigureType][]MoveValidator {
 		NotAllyChessmanValidator{},
 		LinePathValidator{},
 		RookMoveValidator{},
+		KingIsNotAttackedAfterMoveValidator{},
 	}
 	validators[Knight] = []MoveValidator{
 		BordersBreachValidator{},
 		DepartureEqualsDestinationValidator{},
 		NotAllyChessmanValidator{},
 		KingMoveValidator{},
+		KingIsNotAttackedAfterMoveValidator{},
 	}
 	validators[Bishop] = []MoveValidator{
 		BordersBreachValidator{},
@@ -41,6 +45,7 @@ func initValidators() map[FigureType][]MoveValidator {
 		NotAllyChessmanValidator{},
 		DiagonalPathValidator{},
 		BishopMoveValidator{},
+		KingIsNotAttackedAfterMoveValidator{},
 	}
 	validators[Queen] = []MoveValidator{
 		BordersBreachValidator{},
@@ -49,6 +54,7 @@ func initValidators() map[FigureType][]MoveValidator {
 		LinePathValidator{},
 		DiagonalPathValidator{},
 		QueenMoveValidator{},
+		KingIsNotAttackedAfterMoveValidator{},
 	}
 	return validators
 }
@@ -276,5 +282,28 @@ func (CastlingMoveValidator) Validate(board *Board, move Move) bool {
 	return true
 }
 
-// TODO: валидатор атаки короля после хода фигуры
+type KingIsNotAttackedAfterMoveValidator struct{}
+
+func (KingIsNotAttackedAfterMoveValidator) Validate(chessboard *Board, move Move) bool {
+	departure := move.Departure()
+	movingFigure := departure.Figure
+	if chessboard.GetKingCords(movingFigure.FigureSide) == nil {
+		return true
+	}
+	validationBoard := chessboard.Copy()
+	departure.Figure = Figure{}
+	departure.Filled = false
+	destination := move.Destination()
+	destination.Figure = movingFigure
+	destination.Filled = true
+
+	validationBoard.SetField(departure)
+	validationBoard.SetField(destination)
+
+	movingFigureSide := movingFigure.FigureSide
+	kingCords := validationBoard.GetKingCords(movingFigureSide)
+
+	return !validationBoard.IsFieldAttackedByOpposedSide(*kingCords, movingFigureSide)
+}
+
 // TODO: поле в валидаторы можно прокинуть указателем в сами структуры, чтобы не передавать в метод. Сделать указатель на переменную "актуальное поле"
