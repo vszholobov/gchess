@@ -57,15 +57,10 @@ func (board *Board) SetField(field Field) {
 	}
 }
 
-func (board *Board) Move(
-	departureCords Cords,
-	destinationCords Cords,
-) (bool, *Board) {
-	departure := board.GetField(departureCords)
-	movingFigure := departure.Figure
-	destination := board.GetField(destinationCords)
-	move := MakeMove(departure, destination)
-
+func (board *Board) Move(move Move) (bool, *Board) {
+	movingFigure := move.Departure().Figure
+	destinationCords := move.Destination().Cords
+	departureCords := move.Departure().Cords
 	for _, validator := range board.moveValidators[movingFigure.FigureType] {
 		validMove := validator.Validate(board, move)
 		if !validMove {
@@ -75,8 +70,8 @@ func (board *Board) Move(
 
 	movingFigure.Moved = true
 
-	newDeparture := Field{Cords: departure.Cords, Filled: false}
-	newDestination := Field{Figure: movingFigure, Cords: destination.Cords, Filled: true}
+	newDeparture := Field{Cords: departureCords, Filled: false}
+	newDestination := Field{Figure: movingFigure, Cords: destinationCords, Filled: true}
 	actualBoard := board.Copy()
 	actualBoard.SetField(newDeparture)
 	actualBoard.SetField(newDestination)

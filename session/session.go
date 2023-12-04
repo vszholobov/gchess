@@ -13,11 +13,15 @@ func MakeSession() Session {
 }
 
 func (session *Session) Move(departureCords board.Cords, destinationCords board.Cords) bool {
-	if session.ActualBoard.GetField(departureCords).Figure.FigureSide != session.moveSide {
+	departure := session.ActualBoard.GetField(departureCords)
+	destination := session.ActualBoard.GetField(destinationCords)
+	if departure.Figure.FigureSide != session.moveSide {
 		return false
 	}
 
-	isMoved, newActualBoard := session.ActualBoard.Move(departureCords, destinationCords)
+	move := board.MakeMove(departure, destination)
+	isMoved, newActualBoard := session.ActualBoard.Move(move)
+
 	if !isMoved {
 		return false
 	}

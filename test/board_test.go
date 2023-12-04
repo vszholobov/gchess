@@ -356,9 +356,10 @@ func TestLongCastleMove(t *testing.T) {
 	whiteRookField := board.Field{Figure: whiteRook, Cords: whiteRookCords, Filled: true}
 	chessBoard.SetField(whiteRookField)
 	castleCords := board.Cords{Col: 2, Row: 0}
+	castleField := chessBoard.GetField(castleCords)
 	futureRookCords := board.Cords{Col: 3, Row: 0}
 
-	isMoved, actualBoard := chessBoard.Move(whiteKingCords, castleCords)
+	isMoved, actualBoard := chessBoard.Move(board.MakeMove(whiteKingField, castleField))
 
 	assert.True(t, isMoved)
 	actualCastleField := actualBoard.GetField(castleCords)
@@ -391,9 +392,10 @@ func TestShortCastleMove(t *testing.T) {
 	whiteRookField := board.Field{Figure: whiteRook, Cords: whiteRookCords, Filled: true}
 	chessBoard.SetField(whiteRookField)
 	castleCords := board.Cords{Col: 6, Row: 0}
+	castleField := chessBoard.GetField(castleCords)
 	futureRookCords := board.Cords{Col: 5, Row: 0}
 
-	isMoved, actualBoard := chessBoard.Move(whiteKingCords, castleCords)
+	isMoved, actualBoard := chessBoard.Move(board.MakeMove(whiteKingField, castleField))
 
 	assert.True(t, isMoved)
 	actualCastleField := actualBoard.GetField(castleCords)
