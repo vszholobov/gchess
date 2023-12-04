@@ -1,6 +1,9 @@
 package board
 
-import "math"
+import (
+	mapset "github.com/deckarep/golang-set/v2"
+	"math"
+)
 
 type MoveValidator interface {
 	Validate(chessboard *Board, move Move) bool
@@ -23,6 +26,7 @@ func initValidators() map[FigureType][]MoveValidator {
 		LinePathValidator{},
 		PawnMoveValidator{},
 		KingIsNotAttackedAfterMoveValidator{},
+		PromotionMoveValidator{},
 	}
 	validators[Rook] = []MoveValidator{
 		BordersBreachValidator{},
@@ -230,6 +234,18 @@ func (PawnMoveValidator) Validate(_ *Board, move Move) bool {
 			diff = move.Departure().Cords.Row - move.Destination().Cords.Row
 		}
 		return diff == 1 || !move.Departure().Figure.Moved && diff == 2
+	}
+}
+
+var promotionAllowedTypes = mapset.NewSet(Queen, Rook, Bishop, Knight)
+
+type PromotionMoveValidator struct{}
+
+func (PromotionMoveValidator) Validate(_ *Board, move Move) bool {
+	if promotionMove, isPromotionMove := move.(PromotionMove); isPromotionMove {
+		return promotionAllowedTypes.Contains(promotionMove.promoteToType)
+	} else {
+		return true
 	}
 }
 

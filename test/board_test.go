@@ -636,3 +636,67 @@ func TestPromotionMoveAllowedTypes(t *testing.T) {
 		assert.Equal(t, figureType, newBoard.GetField(destinationCords).Figure.FigureType)
 	}
 }
+
+func TestPromotionMoveNotAllowedTypes(t *testing.T) {
+	notAllowedFigureTypes := []board.FigureType{board.King, board.Pawn}
+	for _, figureType := range notAllowedFigureTypes {
+		chessBoard := board.MakeBoard()
+
+		whitePawn := board.Figure{FigureType: board.Pawn, FigureSide: board.White, Moved: false}
+		whitePawnCords := board.Cords{Col: 0, Row: 6}
+		whitePawnField := board.Field{Figure: whitePawn, Cords: whitePawnCords, Filled: true}
+		chessBoard.SetField(whitePawnField)
+
+		destinationCords := board.Cords{Col: 0, Row: 7}
+		destinationField := chessBoard.GetField(destinationCords)
+		promotionMove := board.MakeMove(whitePawnField, destinationField, figureType)
+
+		isMoved, _ := chessBoard.Move(promotionMove)
+		assert.False(t, isMoved)
+	}
+}
+
+func TestPromotionKillMoveAllowedTypes(t *testing.T) {
+	allowedFigureTypes := []board.FigureType{board.Queen, board.Bishop, board.Knight, board.Rook}
+	for _, figureType := range allowedFigureTypes {
+		chessBoard := board.MakeBoard()
+
+		whitePawn := board.Figure{FigureType: board.Pawn, FigureSide: board.White, Moved: false}
+		whitePawnCords := board.Cords{Col: 0, Row: 6}
+		whitePawnField := board.Field{Figure: whitePawn, Cords: whitePawnCords, Filled: true}
+		chessBoard.SetField(whitePawnField)
+
+		blackRook := board.Figure{FigureType: board.Rook, FigureSide: board.Black, Moved: true}
+		blackRookCords := board.Cords{Col: 1, Row: 7}
+		blackRookField := board.Field{Figure: blackRook, Cords: blackRookCords, Filled: true}
+		chessBoard.SetField(blackRookField)
+
+		promotionMove := board.MakeMove(whitePawnField, blackRookField, figureType)
+
+		isMoved, newBoard := chessBoard.Move(promotionMove)
+		assert.True(t, isMoved)
+		assert.Equal(t, figureType, newBoard.GetField(blackRookCords).Figure.FigureType)
+	}
+}
+
+func TestPromotionKillMoveNotAllowedTypes(t *testing.T) {
+	allowedFigureTypes := []board.FigureType{board.King, board.Pawn}
+	for _, figureType := range allowedFigureTypes {
+		chessBoard := board.MakeBoard()
+
+		whitePawn := board.Figure{FigureType: board.Pawn, FigureSide: board.White, Moved: false}
+		whitePawnCords := board.Cords{Col: 0, Row: 6}
+		whitePawnField := board.Field{Figure: whitePawn, Cords: whitePawnCords, Filled: true}
+		chessBoard.SetField(whitePawnField)
+
+		blackRook := board.Figure{FigureType: board.Rook, FigureSide: board.Black, Moved: true}
+		blackRookCords := board.Cords{Col: 1, Row: 7}
+		blackRookField := board.Field{Figure: blackRook, Cords: blackRookCords, Filled: true}
+		chessBoard.SetField(blackRookField)
+
+		promotionMove := board.MakeMove(whitePawnField, blackRookField, figureType)
+
+		isMoved, _ := chessBoard.Move(promotionMove)
+		assert.False(t, isMoved)
+	}
+}
