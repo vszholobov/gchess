@@ -9,7 +9,7 @@ type Move interface {
 }
 
 // MakeMove TODO: make representation
-func MakeMove(departure Field, destination Field) Move {
+func MakeMove(departure Field, destination Field, promoteToType FigureType) Move {
 	colDistance := math.Abs(float64(departure.Cords.Col - destination.Cords.Col))
 	if departure.Figure.FigureType == King && colDistance > 1 {
 		row := GetDefaultRowBySide(departure.Figure.FigureSide)
@@ -31,9 +31,13 @@ func MakeMove(departure Field, destination Field) Move {
 			rookDepartureCords:   rookDepartureCords,
 			rookDestinationCords: rookDestinationCords,
 		}
-
-		//} else if departure.Figure.FigureType == Pawn && (destination.Cords.Row == 0 || destination.Cords.Row == 7) {
-		//
+	} else if departure.Figure.FigureType == Pawn && (destination.Cords.Row == 0 || destination.Cords.Row == 7) {
+		return PromotionMove{
+			departure:            departure,
+			destination:          destination,
+			stringRepresentation: "",
+			promoteToType:        promoteToType,
+		}
 	} else {
 		return DefaultMove{departure: departure, destination: destination, stringRepresentation: ""}
 	}
@@ -83,6 +87,29 @@ func (move CastleMove) RookDepartureCords() Cords {
 
 func (move CastleMove) RookDestinationCords() Cords {
 	return move.rookDestinationCords
+}
+
+type PromotionMove struct {
+	departure            Field
+	destination          Field
+	stringRepresentation string
+	promoteToType        FigureType
+}
+
+func (move PromotionMove) Departure() Field {
+	return move.departure
+}
+
+func (move PromotionMove) Destination() Field {
+	return move.destination
+}
+
+func (move PromotionMove) String() string {
+	return move.stringRepresentation
+}
+
+func (move PromotionMove) PromoteToType() FigureType {
+	return move.promoteToType
 }
 
 //type KillMove struct {

@@ -84,7 +84,7 @@ func TestSessionMove(t *testing.T) {
 	departureCords := board.Cords{Col: 0, Row: 1}
 	destinationCords := board.Cords{Col: 0, Row: 3}
 
-	chessSession.Move(departureCords, destinationCords)
+	chessSession.Move(session.MoveRequest{DepartureCords: departureCords, DestinationCords: destinationCords})
 
 	departure := chessSession.ActualBoard.GetField(departureCords)
 	destination := chessSession.ActualBoard.GetField(destinationCords)
@@ -102,8 +102,14 @@ func TestSessionMove_FailSecondWhiteMove(t *testing.T) {
 	secondWhiteMoveDepartureCords := board.Cords{Col: 1, Row: 1}
 	secondWhiteMoveDestinationCords := board.Cords{Col: 1, Row: 3}
 
-	firstWhiteMoveIsMoved := chessSession.Move(firstWhiteMoveDepartureCords, firstWhiteMoveDestinationCords)
-	secondWhiteMoveIsMoved := chessSession.Move(secondWhiteMoveDepartureCords, secondWhiteMoveDestinationCords)
+	firstWhiteMoveIsMoved := chessSession.Move(session.MoveRequest{
+		DepartureCords:   firstWhiteMoveDepartureCords,
+		DestinationCords: firstWhiteMoveDestinationCords,
+	})
+	secondWhiteMoveIsMoved := chessSession.Move(session.MoveRequest{
+		DepartureCords:   secondWhiteMoveDepartureCords,
+		DestinationCords: secondWhiteMoveDestinationCords,
+	})
 
 	assert.True(t, firstWhiteMoveIsMoved)
 	assert.False(t, secondWhiteMoveIsMoved)
@@ -115,7 +121,10 @@ func TestSessionMove_FailFirstBlackMove(t *testing.T) {
 	firstBlackMoveDepartureCords := board.Cords{Col: 0, Row: 6}
 	firstBlackMoveDestinationCords := board.Cords{Col: 0, Row: 4}
 
-	firstBlackMoveIsMoved := chessSession.Move(firstBlackMoveDepartureCords, firstBlackMoveDestinationCords)
+	firstBlackMoveIsMoved := chessSession.Move(session.MoveRequest{
+		DepartureCords:   firstBlackMoveDepartureCords,
+		DestinationCords: firstBlackMoveDestinationCords,
+	})
 
 	assert.False(t, firstBlackMoveIsMoved)
 	assert.Len(t, chessSession.BoardHistory, 0)
@@ -128,8 +137,14 @@ func TestSessionMove_SecondBlackMove(t *testing.T) {
 	blackMoveDepartureCords := board.Cords{Col: 0, Row: 6}
 	blackMoveDestinationCords := board.Cords{Col: 0, Row: 4}
 
-	whiteMoveIsMoved := chessSession.Move(whiteMoveDepartureCords, whiteMoveDestinationCords)
-	blackMoveIsMoved := chessSession.Move(blackMoveDepartureCords, blackMoveDestinationCords)
+	whiteMoveIsMoved := chessSession.Move(session.MoveRequest{
+		DepartureCords:   whiteMoveDepartureCords,
+		DestinationCords: whiteMoveDestinationCords,
+	})
+	blackMoveIsMoved := chessSession.Move(session.MoveRequest{
+		DepartureCords:   blackMoveDepartureCords,
+		DestinationCords: blackMoveDestinationCords,
+	})
 
 	assert.True(t, whiteMoveIsMoved)
 	assert.True(t, blackMoveIsMoved)
@@ -162,7 +177,7 @@ func TestWhiteLongCastleValidation(t *testing.T) {
 	chessBoard.SetField(whiteRookField)
 	castlingMoveValidator := board.CastlingMoveValidator{}
 	destinationCastleField := chessBoard.GetField(board.Cords{Col: 2, Row: 0})
-	castlingMove := board.MakeMove(whiteKingField, destinationCastleField)
+	castlingMove := board.MakeMove(whiteKingField, destinationCastleField, board.EmptyType)
 
 	isCastled := castlingMoveValidator.Validate(&chessBoard, castlingMove)
 
@@ -181,7 +196,7 @@ func TestBlackLongCastleValidation(t *testing.T) {
 	chessBoard.SetField(blackRookField)
 	castlingMoveValidator := board.CastlingMoveValidator{}
 	destinationCastleField := chessBoard.GetField(board.Cords{Col: 2, Row: 7})
-	castlingMove := board.MakeMove(blackKingField, destinationCastleField)
+	castlingMove := board.MakeMove(blackKingField, destinationCastleField, board.EmptyType)
 
 	isCastled := castlingMoveValidator.Validate(&chessBoard, castlingMove)
 
@@ -205,7 +220,7 @@ func TestWhiteLongCastleValidation_FailKnightFilledBetween(t *testing.T) {
 	chessBoard.SetField(whiteRookField)
 	castlingMoveValidator := board.CastlingMoveValidator{}
 	destinationCastleField := chessBoard.GetField(board.Cords{Col: 2, Row: 0})
-	castlingMove := board.MakeMove(whiteKingField, destinationCastleField)
+	castlingMove := board.MakeMove(whiteKingField, destinationCastleField, board.EmptyType)
 
 	isCastled := castlingMoveValidator.Validate(&chessBoard, castlingMove)
 
@@ -224,7 +239,7 @@ func TestBlackLongCastleValidation_FailKingMovedBefore(t *testing.T) {
 	chessBoard.SetField(blackRookField)
 	castlingMoveValidator := board.CastlingMoveValidator{}
 	destinationCastleField := chessBoard.GetField(board.Cords{Col: 2, Row: 7})
-	castlingMove := board.MakeMove(blackKingField, destinationCastleField)
+	castlingMove := board.MakeMove(blackKingField, destinationCastleField, board.EmptyType)
 
 	isCastled := castlingMoveValidator.Validate(&chessBoard, castlingMove)
 
@@ -243,7 +258,7 @@ func TestBlackLongCastleValidation_FailRookMovedBefore(t *testing.T) {
 	chessBoard.SetField(blackRookField)
 	castlingMoveValidator := board.CastlingMoveValidator{}
 	destinationCastleField := chessBoard.GetField(board.Cords{Col: 2, Row: 7})
-	castlingMove := board.MakeMove(blackKingField, destinationCastleField)
+	castlingMove := board.MakeMove(blackKingField, destinationCastleField, board.EmptyType)
 
 	isCastled := castlingMoveValidator.Validate(&chessBoard, castlingMove)
 
@@ -332,7 +347,11 @@ func TestMakeMove_LongCastleMove(t *testing.T) {
 	whiteKingField := board.Field{Figure: whiteKing, Cords: whiteKingCords, Filled: true}
 	chessBoard.SetField(whiteKingField)
 	castleCords := board.Cords{Col: 2, Row: 0}
-	assert.IsType(t, board.CastleMove{}, board.MakeMove(whiteKingField, board.Field{Cords: castleCords}))
+	assert.IsType(t, board.CastleMove{}, board.MakeMove(
+		whiteKingField,
+		board.Field{Cords: castleCords},
+		board.EmptyType,
+	))
 }
 
 func TestMakeMove_CastleMove(t *testing.T) {
@@ -342,7 +361,11 @@ func TestMakeMove_CastleMove(t *testing.T) {
 	whiteKingField := board.Field{Figure: whiteKing, Cords: whiteKingCords, Filled: true}
 	chessBoard.SetField(whiteKingField)
 	castleCords := board.Cords{Col: 6, Row: 0}
-	assert.IsType(t, board.CastleMove{}, board.MakeMove(whiteKingField, board.Field{Cords: castleCords}))
+	assert.IsType(t, board.CastleMove{}, board.MakeMove(
+		whiteKingField,
+		board.Field{Cords: castleCords},
+		board.EmptyType,
+	))
 }
 
 func TestLongCastleMove(t *testing.T) {
@@ -359,7 +382,7 @@ func TestLongCastleMove(t *testing.T) {
 	castleField := chessBoard.GetField(castleCords)
 	futureRookCords := board.Cords{Col: 3, Row: 0}
 
-	isMoved, actualBoard := chessBoard.Move(board.MakeMove(whiteKingField, castleField))
+	isMoved, actualBoard := chessBoard.Move(board.MakeMove(whiteKingField, castleField, board.EmptyType))
 
 	assert.True(t, isMoved)
 	actualCastleField := actualBoard.GetField(castleCords)
@@ -395,7 +418,7 @@ func TestShortCastleMove(t *testing.T) {
 	castleField := chessBoard.GetField(castleCords)
 	futureRookCords := board.Cords{Col: 5, Row: 0}
 
-	isMoved, actualBoard := chessBoard.Move(board.MakeMove(whiteKingField, castleField))
+	isMoved, actualBoard := chessBoard.Move(board.MakeMove(whiteKingField, castleField, board.EmptyType))
 
 	assert.True(t, isMoved)
 	actualCastleField := actualBoard.GetField(castleCords)
@@ -426,7 +449,7 @@ func TestKingIsNotAttackedAfterKingMove(t *testing.T) {
 	destinationCords := board.Cords{Col: 3, Row: 0}
 
 	destinationField := chessBoard.GetField(destinationCords)
-	kingMove := board.MakeMove(whiteKingField, destinationField)
+	kingMove := board.MakeMove(whiteKingField, destinationField, board.EmptyType)
 
 	validator := board.KingIsNotAttackedAfterMoveValidator{}
 	kingIsAttacked := !validator.Validate(&chessBoard, kingMove)
@@ -449,7 +472,7 @@ func TestKingIsAttackedAfterKingMove_KingAlreadyAttacked(t *testing.T) {
 	destinationCords := board.Cords{Col: 3, Row: 0}
 
 	destinationField := chessBoard.GetField(destinationCords)
-	kingMove := board.MakeMove(whiteKingField, destinationField)
+	kingMove := board.MakeMove(whiteKingField, destinationField, board.EmptyType)
 
 	validator := board.KingIsNotAttackedAfterMoveValidator{}
 	kingIsAttacked := !validator.Validate(&chessBoard, kingMove)
@@ -472,7 +495,7 @@ func TestKingIsAttackedAfterKingMove_KingMovedToAttackedField(t *testing.T) {
 	destinationCords := board.Cords{Col: 4, Row: 1}
 
 	destinationField := chessBoard.GetField(destinationCords)
-	kingMove := board.MakeMove(whiteKingField, destinationField)
+	kingMove := board.MakeMove(whiteKingField, destinationField, board.EmptyType)
 
 	validator := board.KingIsNotAttackedAfterMoveValidator{}
 	kingIsAttacked := !validator.Validate(&chessBoard, kingMove)
@@ -501,7 +524,7 @@ func TestKingIsAttacked_CoveringFigureMoved(t *testing.T) {
 	destinationCords := board.Cords{Col: 4, Row: 1}
 
 	destinationField := chessBoard.GetField(destinationCords)
-	bishopMove := board.MakeMove(whiteBishopField, destinationField)
+	bishopMove := board.MakeMove(whiteBishopField, destinationField, board.EmptyType)
 
 	validator := board.KingIsNotAttackedAfterMoveValidator{}
 	kingIsAttacked := !validator.Validate(&chessBoard, bishopMove)
@@ -527,7 +550,7 @@ func TestKingIsNotAttacked_KingAlreadyAttacked_AttackingFigureKilled(t *testing.
 	whiteBishopField := board.Field{Figure: whiteBishop, Cords: whiteBishopCords, Filled: true}
 	chessBoard.SetField(whiteBishopField)
 
-	bishopMove := board.MakeMove(whiteBishopField, blackRookField)
+	bishopMove := board.MakeMove(whiteBishopField, blackRookField, board.EmptyType)
 
 	validator := board.KingIsNotAttackedAfterMoveValidator{}
 	kingIsAttacked := !validator.Validate(&chessBoard, bishopMove)
@@ -558,7 +581,7 @@ func TestKingIsAttacked_KingAlreadyAttacked_AttackingFigureKilledByCoveringPiece
 	whiteBishopField := board.Field{Figure: whiteBishop, Cords: whiteBishopCords, Filled: true}
 	chessBoard.SetField(whiteBishopField)
 
-	bishopMove := board.MakeMove(whiteBishopField, blackRookField)
+	bishopMove := board.MakeMove(whiteBishopField, blackRookField, board.EmptyType)
 
 	validator := board.KingIsNotAttackedAfterMoveValidator{}
 	kingIsAttacked := !validator.Validate(&chessBoard, bishopMove)
@@ -586,7 +609,7 @@ func TestKingIsNotAttacked_KingAlreadyAttacked_KingCovered(t *testing.T) {
 
 	destinationCords := board.Cords{Col: 3, Row: 0}
 	destinationField := chessBoard.GetField(destinationCords)
-	bishopMove := board.MakeMove(whiteBishopField, destinationField)
+	bishopMove := board.MakeMove(whiteBishopField, destinationField, board.EmptyType)
 
 	validator := board.KingIsNotAttackedAfterMoveValidator{}
 	kingIsAttacked := !validator.Validate(&chessBoard, bishopMove)
