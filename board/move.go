@@ -31,6 +31,9 @@ func MakeMove(departure Field, destination Field) Move {
 			rookDepartureCords:   rookDepartureCords,
 			rookDestinationCords: rookDestinationCords,
 		}
+
+		//} else if departure.Figure.FigureType == Pawn && (destination.Cords.Row == 0 || destination.Cords.Row == 7) {
+		//
 	} else {
 		return DefaultMove{departure: departure, destination: destination, stringRepresentation: ""}
 	}
@@ -82,5 +85,20 @@ func (move CastleMove) RookDestinationCords() Cords {
 	return move.rookDestinationCords
 }
 
-// TODO: type KillMove struct{}
-// TODO: type PromoteMove struct{}
+//type KillMove struct {
+//	departure            Field
+//	destination          Field
+//	stringRepresentation string
+//}
+//
+//func (move KillMove) Departure() Field {
+//	return move.departure
+//}
+//
+//func (move KillMove) Destination() Field {
+//	return move.destination
+//}
+//
+//func (move KillMove) String() string {
+//	return move.stringRepresentation
+//}

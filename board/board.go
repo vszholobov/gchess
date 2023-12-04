@@ -60,13 +60,9 @@ func (board *Board) SetField(field Field) {
 func (board *Board) Move(
 	departureCords Cords,
 	destinationCords Cords,
-	moveSide FigureSide,
 ) (bool, *Board) {
 	departure := board.GetField(departureCords)
 	movingFigure := departure.Figure
-	if movingFigure.FigureSide != moveSide {
-		return false, nil
-	}
 	destination := board.GetField(destinationCords)
 	move := MakeMove(departure, destination)
 
