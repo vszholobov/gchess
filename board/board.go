@@ -73,8 +73,6 @@ func (board *Board) Move(move Move) (bool, *Board) {
 	newDeparture := Field{Cords: departureCords, Filled: false}
 	newDestination := Field{Figure: movingFigure, Cords: destinationCords, Filled: true}
 	actualBoard := board.Copy()
-	actualBoard.SetField(newDeparture)
-	actualBoard.SetField(newDestination)
 
 	// TODO: учесть повышение фигуры
 	if castleMove, isCastleMove := move.(CastleMove); isCastleMove {
@@ -84,7 +82,12 @@ func (board *Board) Move(move Move) (bool, *Board) {
 		newRookDestination := Field{Figure: rook, Cords: castleMove.RookDestinationCords(), Filled: true}
 		actualBoard.SetField(newRookDeparture)
 		actualBoard.SetField(newRookDestination)
+	} else if promotionMove, isPromotionMove := move.(PromotionMove); isPromotionMove {
+		newDestination.Figure.FigureType = promotionMove.PromoteToType()
 	}
+
+	actualBoard.SetField(newDeparture)
+	actualBoard.SetField(newDestination)
 
 	if movingFigure.FigureType == King {
 		if movingFigure.FigureSide == White {

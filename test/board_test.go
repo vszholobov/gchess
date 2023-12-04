@@ -616,3 +616,23 @@ func TestKingIsNotAttacked_KingAlreadyAttacked_KingCovered(t *testing.T) {
 
 	assert.False(t, kingIsAttacked)
 }
+
+func TestPromotionMoveAllowedTypes(t *testing.T) {
+	allowedFigureTypes := []board.FigureType{board.Queen, board.Bishop, board.Knight, board.Rook}
+	for _, figureType := range allowedFigureTypes {
+		chessBoard := board.MakeBoard()
+
+		whitePawn := board.Figure{FigureType: board.Pawn, FigureSide: board.White, Moved: false}
+		whitePawnCords := board.Cords{Col: 0, Row: 6}
+		whitePawnField := board.Field{Figure: whitePawn, Cords: whitePawnCords, Filled: true}
+		chessBoard.SetField(whitePawnField)
+
+		destinationCords := board.Cords{Col: 0, Row: 7}
+		destinationField := chessBoard.GetField(destinationCords)
+		promotionMove := board.MakeMove(whitePawnField, destinationField, figureType)
+
+		isMoved, newBoard := chessBoard.Move(promotionMove)
+		assert.True(t, isMoved)
+		assert.Equal(t, figureType, newBoard.GetField(destinationCords).Figure.FigureType)
+	}
+}
