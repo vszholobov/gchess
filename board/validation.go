@@ -6,66 +6,72 @@ import (
 )
 
 type MoveValidator interface {
-	Validate(chessboard *Board, move Move) bool
+	Validate(move Move) bool
 }
 
-func initValidators() map[FigureType][]MoveValidator {
+func InitValidators(actualBoard *Board) map[FigureType][]MoveValidator {
 	validators := make(map[FigureType][]MoveValidator, 6)
+	bordersBreachValidator := BordersBreachValidator{}
+	departureEqualsDestinationValidator := DepartureEqualsDestinationValidator{}
+	notAllyChessmanValidator := NotAllyChessmanValidator{}
+	kingIsNotAttackedAfterMoveValidator := KingIsNotAttackedAfterMoveValidator{actualBoard}
+	linePathValidator := LinePathValidator{actualBoard}
+	diagonalPathValidator := DiagonalPathValidator{actualBoard}
 	validators[King] = []MoveValidator{
-		BordersBreachValidator{},
-		DepartureEqualsDestinationValidator{},
-		NotAllyChessmanValidator{},
+		bordersBreachValidator,
+		departureEqualsDestinationValidator,
+		notAllyChessmanValidator,
+		kingIsNotAttackedAfterMoveValidator,
 		KingMoveValidator{},
-		CastlingMoveValidator{},
-		KingIsNotAttackedAfterMoveValidator{},
+		CastlingMoveValidator{actualBoard},
 	}
 	validators[Pawn] = []MoveValidator{
-		BordersBreachValidator{},
-		DepartureEqualsDestinationValidator{},
-		NotAllyChessmanValidator{},
-		LinePathValidator{},
-		PawnMoveValidator{},
-		KingIsNotAttackedAfterMoveValidator{},
+		bordersBreachValidator,
+		departureEqualsDestinationValidator,
+		notAllyChessmanValidator,
+		kingIsNotAttackedAfterMoveValidator,
+		linePathValidator,
+		PawnMoveValidator{actualBoard},
 		PromotionMoveValidator{},
 	}
 	validators[Rook] = []MoveValidator{
-		BordersBreachValidator{},
-		DepartureEqualsDestinationValidator{},
-		NotAllyChessmanValidator{},
-		LinePathValidator{},
+		bordersBreachValidator,
+		departureEqualsDestinationValidator,
+		notAllyChessmanValidator,
+		kingIsNotAttackedAfterMoveValidator,
+		linePathValidator,
 		RookMoveValidator{},
-		KingIsNotAttackedAfterMoveValidator{},
 	}
 	validators[Knight] = []MoveValidator{
-		BordersBreachValidator{},
-		DepartureEqualsDestinationValidator{},
-		NotAllyChessmanValidator{},
-		KingMoveValidator{},
-		KingIsNotAttackedAfterMoveValidator{},
+		bordersBreachValidator,
+		departureEqualsDestinationValidator,
+		notAllyChessmanValidator,
+		kingIsNotAttackedAfterMoveValidator,
+		KnightMoveValidator{},
 	}
 	validators[Bishop] = []MoveValidator{
-		BordersBreachValidator{},
-		DepartureEqualsDestinationValidator{},
-		NotAllyChessmanValidator{},
-		DiagonalPathValidator{},
+		bordersBreachValidator,
+		departureEqualsDestinationValidator,
+		notAllyChessmanValidator,
+		kingIsNotAttackedAfterMoveValidator,
+		diagonalPathValidator,
 		BishopMoveValidator{},
-		KingIsNotAttackedAfterMoveValidator{},
 	}
 	validators[Queen] = []MoveValidator{
-		BordersBreachValidator{},
-		DepartureEqualsDestinationValidator{},
-		NotAllyChessmanValidator{},
-		LinePathValidator{},
-		DiagonalPathValidator{},
+		bordersBreachValidator,
+		departureEqualsDestinationValidator,
+		notAllyChessmanValidator,
+		kingIsNotAttackedAfterMoveValidator,
+		linePathValidator,
+		diagonalPathValidator,
 		QueenMoveValidator{},
-		KingIsNotAttackedAfterMoveValidator{},
 	}
 	return validators
 }
 
 type BordersBreachValidator struct{}
 
-func (BordersBreachValidator) Validate(_ *Board, move Move) bool {
+func (BordersBreachValidator) Validate(move Move) bool {
 	destinationCords := move.Destination().Cords
 	valid := destinationCords.Col >= 0 && destinationCords.Col < ChessboardSize &&
 		destinationCords.Row >= 0 && destinationCords.Row < ChessboardSize
@@ -74,22 +80,24 @@ func (BordersBreachValidator) Validate(_ *Board, move Move) bool {
 
 type DepartureEqualsDestinationValidator struct{}
 
-func (DepartureEqualsDestinationValidator) Validate(_ *Board, move Move) bool {
+func (DepartureEqualsDestinationValidator) Validate(move Move) bool {
 	return !move.Departure().Cords.Equal(move.Destination().Cords)
 }
 
 type NotAllyChessmanValidator struct{}
 
-func (NotAllyChessmanValidator) Validate(_ *Board, move Move) bool {
+func (NotAllyChessmanValidator) Validate(move Move) bool {
 	if !move.Destination().Filled {
 		return true
 	}
 	return move.Departure().Figure.FigureSide != move.Destination().Figure.FigureSide
 }
 
-type LinePathValidator struct{}
+type LinePathValidator struct {
+	ActualBoard *Board
+}
 
-func (LinePathValidator) Validate(chessboard *Board, move Move) bool {
+func (moveValidator LinePathValidator) Validate(move Move) bool {
 	startCol := move.Departure().Cords.Col
 	startRow := move.Departure().Cords.Row
 
@@ -110,13 +118,13 @@ func (LinePathValidator) Validate(chessboard *Board, move Move) bool {
 
 	if destRow == startRow {
 		for col := startCol + 1; col < destCol; col++ {
-			if chessboard.GetField(Cords{Col: col, Row: startRow}).Filled {
+			if moveValidator.ActualBoard.GetField(Cords{Col: col, Row: startRow}).Filled {
 				return false
 			}
 		}
 	} else {
 		for row := startRow + 1; row < destRow; row++ {
-			if chessboard.GetField(Cords{Col: startCol, Row: row}).Filled {
+			if moveValidator.ActualBoard.GetField(Cords{Col: startCol, Row: row}).Filled {
 				return false
 			}
 		}
@@ -124,9 +132,11 @@ func (LinePathValidator) Validate(chessboard *Board, move Move) bool {
 	return true
 }
 
-type DiagonalPathValidator struct{}
+type DiagonalPathValidator struct {
+	ActualBoard *Board
+}
 
-func (DiagonalPathValidator) Validate(chessboard *Board, move Move) bool {
+func (moveValidator DiagonalPathValidator) Validate(move Move) bool {
 	startCol := move.Departure().Cords.Col
 	startRow := move.Departure().Cords.Row
 
@@ -139,13 +149,13 @@ func (DiagonalPathValidator) Validate(chessboard *Board, move Move) bool {
 
 	if (destCol > startCol && destRow < startRow) || (destCol < startCol && destRow > startRow) {
 		for col := startCol; col < destCol; col++ {
-			if chessboard.GetField(Cords{Col: col, Row: ChessboardSize - col - 1}).Filled {
+			if moveValidator.ActualBoard.GetField(Cords{Col: col, Row: ChessboardSize - col - 1}).Filled {
 				return false
 			}
 		}
 	} else {
 		for i := 0; i < destCol; i++ {
-			if chessboard.GetField(Cords{Col: i, Row: i}).Filled {
+			if moveValidator.ActualBoard.GetField(Cords{Col: i, Row: i}).Filled {
 				return false
 			}
 		}
@@ -155,7 +165,7 @@ func (DiagonalPathValidator) Validate(chessboard *Board, move Move) bool {
 
 type KnightMoveValidator struct{}
 
-func (KnightMoveValidator) Validate(_ *Board, move Move) bool {
+func (KnightMoveValidator) Validate(move Move) bool {
 	startCol := move.Departure().Cords.Col
 	startRow := move.Departure().Cords.Row
 
@@ -169,7 +179,7 @@ func (KnightMoveValidator) Validate(_ *Board, move Move) bool {
 
 type QueenMoveValidator struct{}
 
-func (QueenMoveValidator) Validate(_ *Board, move Move) bool {
+func (QueenMoveValidator) Validate(move Move) bool {
 	startCol := move.Departure().Cords.Col
 	startRow := move.Departure().Cords.Row
 
@@ -189,7 +199,7 @@ func (QueenMoveValidator) Validate(_ *Board, move Move) bool {
 
 type RookMoveValidator struct{}
 
-func (RookMoveValidator) Validate(_ *Board, move Move) bool {
+func (RookMoveValidator) Validate(move Move) bool {
 	startCol := move.Departure().Cords.Col
 	startRow := move.Departure().Cords.Row
 
@@ -202,7 +212,7 @@ func (RookMoveValidator) Validate(_ *Board, move Move) bool {
 
 type BishopMoveValidator struct{}
 
-func (BishopMoveValidator) Validate(_ *Board, move Move) bool {
+func (BishopMoveValidator) Validate(move Move) bool {
 	startCol := move.Departure().Cords.Col
 	startRow := move.Departure().Cords.Row
 
@@ -213,27 +223,37 @@ func (BishopMoveValidator) Validate(_ *Board, move Move) bool {
 	return isValid
 }
 
-type PawnMoveValidator struct{}
+type PawnMoveValidator struct {
+	ActualBoard *Board
+}
 
-func (PawnMoveValidator) Validate(_ *Board, move Move) bool {
+func (moveValidator PawnMoveValidator) Validate(move Move) bool {
 	startCol := move.Departure().Cords.Col
 	destCol := move.Destination().Cords.Col
+	movingPawn := move.Departure().Figure
 
-	if startCol != destCol {
-		// TODO: взятие на проходе (амперсанд)
-		// TODO: в валидатор амперсанд можно прокинуть указатель на последний ход. Сделать указатель на переменную "последний ход"
-		isValid := move.Destination().Filled &&
-			move.Departure().Figure.FigureSide != move.Destination().Figure.FigureSide &&
-			math.Abs(float64(startCol-destCol)) == 1.0
-		return isValid
+	var rowDistance int
+	if movingPawn.FigureSide == White {
+		rowDistance = move.Destination().Cords.Row - move.Departure().Cords.Row
 	} else {
-		var diff int
-		if move.Departure().Figure.FigureSide == White {
-			diff = move.Destination().Cords.Row - move.Departure().Cords.Row
-		} else {
-			diff = move.Departure().Cords.Row - move.Destination().Cords.Row
+		rowDistance = move.Departure().Cords.Row - move.Destination().Cords.Row
+	}
+
+	if startCol == destCol {
+		return rowDistance == 1 || !movingPawn.Moved && rowDistance == 2
+	} else {
+		colDistance := math.Abs(float64(startCol - destCol))
+		if colDistance != 1 || rowDistance != 1 {
+			return false
 		}
-		return diff == 1 || !move.Departure().Figure.Moved && diff == 2
+		if move.Destination().Filled {
+			return movingPawn.FigureSide != move.Destination().Figure.FigureSide
+		} else {
+			lastMove := moveValidator.ActualBoard.GetLastMove()
+			distance := math.Abs(float64(lastMove.Destination().Cords.Row - lastMove.Departure().Cords.Row))
+			return lastMove.Departure().Figure.FigureType == Pawn && distance == 2 &&
+				lastMove.Destination().Cords.Col == destCol && lastMove.Destination().Cords.Row == move.Departure().Cords.Row
+		}
 	}
 }
 
@@ -241,7 +261,7 @@ var promotionAllowedTypes = mapset.NewSet(Queen, Rook, Bishop, Knight)
 
 type PromotionMoveValidator struct{}
 
-func (PromotionMoveValidator) Validate(_ *Board, move Move) bool {
+func (PromotionMoveValidator) Validate(move Move) bool {
 	if promotionMove, isPromotionMove := move.(PromotionMove); isPromotionMove {
 		return promotionAllowedTypes.Contains(promotionMove.promoteToType)
 	} else {
@@ -251,16 +271,19 @@ func (PromotionMoveValidator) Validate(_ *Board, move Move) bool {
 
 type KingMoveValidator struct{}
 
-func (KingMoveValidator) Validate(_ *Board, move Move) bool {
+func (KingMoveValidator) Validate(move Move) bool {
 	colDiff := math.Abs(float64(move.Departure().Cords.Col - move.Destination().Cords.Col))
 	rowDiff := math.Abs(float64(move.Departure().Cords.Row - move.Destination().Cords.Row))
 	return colDiff <= 1 && rowDiff <= 1 || colDiff == 2 && rowDiff == 0
 }
 
-type CastlingMoveValidator struct{}
+type CastlingMoveValidator struct {
+	ActualBoard *Board
+}
 
-func (CastlingMoveValidator) Validate(board *Board, move Move) bool {
+func (moveValidator CastlingMoveValidator) Validate(move Move) bool {
 	king := move.Departure().Figure
+	board := moveValidator.ActualBoard
 	if king.Moved {
 		return false
 	}
@@ -298,15 +321,17 @@ func (CastlingMoveValidator) Validate(board *Board, move Move) bool {
 	return true
 }
 
-type KingIsNotAttackedAfterMoveValidator struct{}
+type KingIsNotAttackedAfterMoveValidator struct {
+	ActualBoard *Board
+}
 
-func (KingIsNotAttackedAfterMoveValidator) Validate(chessboard *Board, move Move) bool {
+func (moveValidator KingIsNotAttackedAfterMoveValidator) Validate(move Move) bool {
 	departure := move.Departure()
 	movingFigure := departure.Figure
-	if chessboard.GetKingCords(movingFigure.FigureSide) == nil {
+	if moveValidator.ActualBoard.GetKingCords(movingFigure.FigureSide) == nil {
 		return true
 	}
-	validationBoard := chessboard.Copy()
+	validationBoard := moveValidator.ActualBoard.Copy()
 	departure.Figure = Figure{}
 	departure.Filled = false
 	destination := move.Destination()

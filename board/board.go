@@ -12,9 +12,9 @@ var diagonalFiguresToSearch = mapset.NewSet(Queen, Bishop)
 
 type Board struct {
 	board          [][]Field
-	moveValidators map[FigureType][]MoveValidator
 	whiteKingCords *Cords
 	blackKingCords *Cords
+	lastMove       *Move
 }
 
 func (board *Board) GetKingCords(kingSide FigureSide) *Cords {
@@ -34,7 +34,6 @@ func (board *Board) Copy() Board {
 	}
 	return Board{
 		board:          duplicate,
-		moveValidators: board.moveValidators,
 		whiteKingCords: board.whiteKingCords,
 		blackKingCords: board.blackKingCords,
 	}
@@ -57,16 +56,10 @@ func (board *Board) SetField(field Field) {
 	}
 }
 
-func (board *Board) Move(move Move) (bool, *Board) {
+func (board *Board) Move(move Move) Board {
 	movingFigure := move.Departure().Figure
 	destinationCords := move.Destination().Cords
 	departureCords := move.Departure().Cords
-	for _, validator := range board.moveValidators[movingFigure.FigureType] {
-		validMove := validator.Validate(board, move)
-		if !validMove {
-			return false, nil
-		}
-	}
 
 	movingFigure.Moved = true
 
@@ -97,7 +90,9 @@ func (board *Board) Move(move Move) (bool, *Board) {
 		}
 	}
 
-	return true, &actualBoard
+	actualBoard.lastMove = &move
+
+	return actualBoard
 }
 
 // IsFieldAttackedByOpposedSide checks whether field at given cords is attacked by any figure of opposed side
@@ -120,6 +115,10 @@ func (board *Board) IsFieldAttackedByOpposedSide(cords Cords, side FigureSide) b
 	isAttacked = isAttacked || isAttackedByPawn(board, cords, side)
 	isAttacked = isAttacked || isAttackedByKing(board, cords, side)
 	return isAttacked
+}
+
+func (board *Board) GetLastMove() Move {
+	return *board.lastMove
 }
 
 func isAttackedByKing(board *Board, cords Cords, side FigureSide) bool {
@@ -197,9 +196,9 @@ func isFieldAttackedByPawn(board *Board, cords Cords, side FigureSide) bool {
 func MakeBoard() Board {
 	board := Board{
 		board:          make([][]Field, ChessboardSize),
-		moveValidators: initValidators(),
 		whiteKingCords: nil,
 		blackKingCords: nil,
+		lastMove:       nil,
 	}
 	for row := range board.board {
 		board.board[row] = make([]Field, ChessboardSize)
