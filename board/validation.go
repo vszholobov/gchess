@@ -30,7 +30,6 @@ func InitValidators(actualBoard *Board) map[FigureType][]MoveValidator {
 		departureEqualsDestinationValidator,
 		notAllyChessmanValidator,
 		kingIsNotAttackedAfterMoveValidator,
-		linePathValidator,
 		PawnMoveValidator{actualBoard},
 		PromotionMoveValidator{},
 	}
@@ -229,18 +228,34 @@ type PawnMoveValidator struct {
 
 func (moveValidator PawnMoveValidator) Validate(move Move) bool {
 	startCol := move.Departure().Cords.Col
-	destCol := move.Destination().Cords.Col
+	destCords := move.Destination().Cords
+	destCol := destCords.Col
 	movingPawn := move.Departure().Figure
 
 	var rowDistance int
 	if movingPawn.FigureSide == White {
-		rowDistance = move.Destination().Cords.Row - move.Departure().Cords.Row
+		rowDistance = destCords.Row - move.Departure().Cords.Row
 	} else {
-		rowDistance = move.Departure().Cords.Row - move.Destination().Cords.Row
+		rowDistance = move.Departure().Cords.Row - destCords.Row
 	}
 
+	actualBoard := moveValidator.ActualBoard
 	if startCol == destCol {
-		return rowDistance == 1 || !movingPawn.Moved && rowDistance == 2
+		destinationField := actualBoard.GetField(destCords)
+		if rowDistance == 1 {
+			return !destinationField.Filled
+		} else if rowDistance == 2 {
+			var diff int
+			if movingPawn.FigureSide == White {
+				diff = 1
+			} else {
+				diff = -1
+			}
+			passField := actualBoard.GetField(Cords{Col: destCol, Row: destCords.Row - diff})
+			return !movingPawn.Moved && !passField.Filled && !destinationField.Filled
+		} else {
+			return false
+		}
 	} else {
 		colDistance := math.Abs(float64(startCol - destCol))
 		if colDistance != 1 || rowDistance != 1 {
@@ -249,7 +264,10 @@ func (moveValidator PawnMoveValidator) Validate(move Move) bool {
 		if move.Destination().Filled {
 			return movingPawn.FigureSide != move.Destination().Figure.FigureSide
 		} else {
-			lastMove := moveValidator.ActualBoard.GetLastMove()
+			lastMove := actualBoard.GetLastMove()
+			if lastMove == nil {
+				return false
+			}
 			distance := math.Abs(float64(lastMove.Destination().Cords.Row - lastMove.Departure().Cords.Row))
 			return lastMove.Departure().Figure.FigureType == Pawn && distance == 2 &&
 				lastMove.Destination().Cords.Col == destCol && lastMove.Destination().Cords.Row == move.Departure().Cords.Row

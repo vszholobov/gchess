@@ -117,6 +117,9 @@ func (board *Board) IsFieldAttackedByOpposedSide(cords Cords, side FigureSide) b
 }
 
 func (board *Board) GetLastMove() Move {
+	if board.lastMove == nil {
+		return nil
+	}
 	return *board.lastMove
 }
 

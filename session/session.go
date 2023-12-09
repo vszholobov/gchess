@@ -3,10 +3,10 @@ package session
 import "chess/board"
 
 type Session struct {
-	ActualBoard    *board.Board
-	BoardHistory   []board.Board
-	moveSide       board.FigureSide
-	moveValidators map[board.FigureType][]board.MoveValidator
+	ActualBoard   *board.Board
+	BoardHistory  []board.Board
+	moveSide      board.FigureSide
+	moveGenerator board.MoveGenerator
 }
 
 type MoveRequest struct {
@@ -18,19 +18,19 @@ type MoveRequest struct {
 func MakeDefaultSession() Session {
 	chessboard := board.InitDefaultBoard()
 	return Session{
-		ActualBoard:    chessboard,
-		BoardHistory:   make([]board.Board, 0, 50),
-		moveSide:       board.White,
-		moveValidators: board.InitValidators(chessboard),
+		ActualBoard:   chessboard,
+		BoardHistory:  make([]board.Board, 0, 50),
+		moveSide:      board.White,
+		moveGenerator: board.MakeMoveGenerator(board.InitValidators(chessboard)),
 	}
 }
 
 func MakeSession(chessBoard *board.Board) Session {
 	return Session{
-		ActualBoard:    chessBoard,
-		BoardHistory:   make([]board.Board, 0, 50),
-		moveSide:       board.White,
-		moveValidators: board.InitValidators(chessBoard),
+		ActualBoard:   chessBoard,
+		BoardHistory:  make([]board.Board, 0, 50),
+		moveSide:      board.White,
+		moveGenerator: board.MakeMoveGenerator(board.InitValidators(chessBoard)),
 	}
 }
 
@@ -43,11 +43,8 @@ func (session *Session) Move(moveRequest MoveRequest) bool {
 
 	move := board.MakeMove(departure, destination, moveRequest.PromoteToType)
 
-	for _, validator := range session.moveValidators[move.Departure().Figure.FigureType] {
-		validMove := validator.Validate(move)
-		if !validMove {
-			return false
-		}
+	if !session.moveGenerator.IsValidMove(move) {
+		return false
 	}
 
 	newActualBoard := session.ActualBoard.Move(move)

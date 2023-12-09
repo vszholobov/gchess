@@ -7,6 +7,44 @@ import (
 	"testing"
 )
 
+func TestPawnMoveForwardPassEnemyPawn(t *testing.T) {
+	chessBoard := board.MakeBoard()
+	whitePawn := board.Figure{FigureType: board.Pawn, FigureSide: board.White, Moved: false}
+	whitePawnCords := board.Cords{Col: 0, Row: 5}
+	whitePawnField := board.Field{Figure: whitePawn, Cords: whitePawnCords, Filled: true}
+	chessBoard.SetField(whitePawnField)
+
+	blackPawn := board.Figure{FigureType: board.Pawn, FigureSide: board.Black, Moved: false}
+	blackPawnCords := board.Cords{Col: 0, Row: 6}
+	blackPawnField := board.Field{Figure: blackPawn, Cords: blackPawnCords, Filled: true}
+	chessBoard.SetField(blackPawnField)
+
+	destinationField := chessBoard.GetField(board.Cords{Col: 0, Row: 7})
+
+	move := board.MakeMove(whitePawnField, destinationField, board.EmptyType)
+	validator := board.PawnMoveValidator{ActualBoard: &chessBoard}
+
+	assert.False(t, validator.Validate(move))
+}
+
+func TestPawnMoveForwardToEnemyPawn(t *testing.T) {
+	chessBoard := board.MakeBoard()
+	whitePawn := board.Figure{FigureType: board.Pawn, FigureSide: board.White, Moved: false}
+	whitePawnCords := board.Cords{Col: 0, Row: 5}
+	whitePawnField := board.Field{Figure: whitePawn, Cords: whitePawnCords, Filled: true}
+	chessBoard.SetField(whitePawnField)
+
+	blackPawn := board.Figure{FigureType: board.Pawn, FigureSide: board.Black, Moved: false}
+	blackPawnCords := board.Cords{Col: 0, Row: 6}
+	blackPawnField := board.Field{Figure: blackPawn, Cords: blackPawnCords, Filled: true}
+	chessBoard.SetField(blackPawnField)
+
+	move := board.MakeMove(whitePawnField, blackPawnField, board.EmptyType)
+	validator := board.PawnMoveValidator{ActualBoard: &chessBoard}
+
+	assert.False(t, validator.Validate(move))
+}
+
 func TestPawnEnPassant_Fail_KillDestinationTooFarRow(t *testing.T) {
 	chessBoard := board.MakeBoard()
 
