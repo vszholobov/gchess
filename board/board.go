@@ -67,7 +67,6 @@ func (board *Board) Move(move Move) Board {
 	newDestination := Field{Figure: movingFigure, Cords: destinationCords, Filled: true}
 	actualBoard := board.Copy()
 
-	// TODO: учесть повышение фигуры
 	if castleMove, isCastleMove := move.(CastleMove); isCastleMove {
 		rook := board.GetField(castleMove.RookDepartureCords()).Figure
 		rook.Moved = true

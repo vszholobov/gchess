@@ -346,5 +346,3 @@ func (moveValidator KingIsNotAttackedAfterMoveValidator) Validate(move Move) boo
 
 	return !validationBoard.IsFieldAttackedByOpposedSide(*kingCords, movingFigureSide)
 }
-
-// TODO: поле в валидаторы можно прокинуть указателем в сами структуры, чтобы не передавать в метод. Сделать указатель на переменную "актуальное поле"
